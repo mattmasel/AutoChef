@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}TicketChef · AutoChef{% endblock %}
+{% block content %}
+<header class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div><p class="eyebrow mb-2">SUPPORT TOOLKIT</p><h1 class="h2 mb-2">TicketChef</h1><p class="text-body-secondary mb-0">Find a solution. Prepare your ticket. Get back to helping.</p></div>
+  <a class="btn btn-outline-success" href="{{ url_for('ticketchef.add_solution') }}">+ Add solution</a>
+</header>
+{% if request.args.get('added') == '1' %}<div class="alert alert-success" role="status">Solution added successfully.</div>{% endif %}
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+<div class="row g-4 align-items-start">
+  <div class="col-lg-6">
+    <section class="card rounded-4"><div class="card-body p-4">
+      <p class="eyebrow mb-2">01 / CUSTOMER DETAILS</p><h2 class="h5 mb-4">What can we help with?</h2>
+      <form method="post" action="{{ url_for('ticketchef.home') }}" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ session['ticketchef_csrf'] }}">
+        <div class="mb-3"><label class="form-label" for="customer_name">Customer name</label><input class="form-control" id="customer_name" name="customer_name" value="{{ form_data.get('customer_name', '') }}" placeholder="John Citizen" required></div>
+        <div class="mb-4"><label class="form-label" for="customer_query">Customer query</label><textarea class="form-control" id="customer_query" name="customer_query" rows="3" placeholder="Describe the issue using a few keywords" required>{{ form_data.get('customer_query', '') }}</textarea><div class="form-text">Use at least two words to search your solution collection.</div></div>
+        <h3 class="h6 border-top pt-4">Remote connection</h3>
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6"><label class="form-label" for="teamviewer_id">TeamViewer ID</label><input class="form-control" id="teamviewer_id" name="teamviewer_id" value="{{ form_data.get('teamviewer_id', '') }}" required></div>
+          <div class="col-sm-6"><label class="form-label" for="teamviewer_password">TeamViewer password</label><input class="form-control" type="text" autocomplete="off" id="teamviewer_password" name="teamviewer_password" value="{{ form_data.get('teamviewer_password', '') }}" required></div>
+          <div class="col-12"><label class="form-label" for="customer_hostname">Hostname</label><input class="form-control" id="customer_hostname" name="customer_hostname" value="{{ form_data.get('customer_hostname', '') }}" placeholder="RECEPTION" required></div>
+        </div>
+        <button class="btn btn-success w-100" type="submit">Generate ticket</button>
+      </form>
+    </div></section>
+  </div>
+  <div class="col-lg-6">
+    <section class="card rounded-4" aria-labelledby="ticket-heading"><div class="card-body p-4">
+      <p class="eyebrow mb-2">02 / TICKET PREVIEW</p><h2 id="ticket-heading" class="h5 mb-3">Ready for your notes</h2>
+      {% if solution_found or no_match %}
+      {% if no_match %}
+      <div class="alert alert-warning mb-3" role="status">No matching solution found. Your basic ticket is ready below.</div>
+      <p class="small text-body-secondary">Add your troubleshooting steps to the preview, or try different search keywords.</p>
+      {% else %}
+      <p class="small text-body-secondary">Matched: <strong>{{ solution['Issue'] }}</strong> · {{ score|round(0)|int }}% match score</p>
+      {% endif %}
+      <label for="ticket-output" class="form-label">Review and edit before copying</label>
+      <textarea id="ticket-output" class="form-control ticketchef-output" rows="14">{{ ticket }}</textarea>
+      <button type="button" class="btn btn-success mt-3" id="copy-ticket">Copy ticket</button>
+      <p id="ticket-copy-status" class="small text-body-secondary mt-2 mb-0" role="status" aria-live="polite"></p>
+      {% if no_match %}<a href="{{ url_for('ticketchef.add_solution') }}" class="btn btn-outline-success mt-3">Add a solution</a>{% endif %}
+      {% else %}
+      <div class="welcome-panel rounded-3 p-4"><h3 class="h6">Your next ticket starts here.</h3><p class="text-body-secondary mb-0">Enter the customer details and query to find the closest solution and build your ticket notes.</p></div>
+      {% endif %}
+    </div></section>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{{ url_for('static', filename='js/ticketchef.js') }}" defer></script>{% endblock %}

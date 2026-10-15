@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% block title %}Checklist · AutoChef{% endblock %}
+
+{% macro condition(row, prefix, collection) %}
+<div class="d-flex flex-wrap align-items-center gap-2">
+  <label class="visually-hidden" for="{{ prefix }}-__INDEX__-{{ row }}-comparison">Condition {{ row }} comparison</label>
+  <select class="form-select w-auto" id="{{ prefix }}-__INDEX__-{{ row }}-comparison" name="{{ collection }}[__INDEX__][{{ row }}][comparison]">
+    {% for value in ['more than', 'less than', 'is'] %}<option>{{ value }}</option>{% endfor %}
+  </select>
+  <label class="visually-hidden" for="{{ prefix }}-__INDEX__-{{ row }}-amount">Condition {{ row }} number</label>
+  <select class="form-select w-auto" id="{{ prefix }}-__INDEX__-{{ row }}-amount" name="{{ collection }}[__INDEX__][{{ row }}][amount]">
+    {% for number in range(1, 32) %}<option>{{ number }}</option>{% endfor %}
+  </select>
+  <label class="visually-hidden" for="{{ prefix }}-__INDEX__-{{ row }}-unit">Condition {{ row }} unit</label>
+  <select class="form-select w-auto" id="{{ prefix }}-__INDEX__-{{ row }}-unit" name="{{ collection }}[__INDEX__][{{ row }}][unit]">
+    {% for value in ['day(s)', 'week(s)', 'month(s)'] %}<option>{{ value }}</option>{% endfor %}
+  </select>
+  <span>in the</span>
+  <label class="visually-hidden" for="{{ prefix }}-__INDEX__-{{ row }}-direction">Condition {{ row }} past or future</label>
+  <select class="form-select w-auto" id="{{ prefix }}-__INDEX__-{{ row }}-direction" name="{{ collection }}[__INDEX__][{{ row }}][direction]">
+    <option>past</option><option>future</option>
+  </select>
+  {% if row == 'first' %}
+  <div class="form-check ms-2">
+    <input class="form-check-input" type="checkbox" id="{{ prefix }}-__INDEX__-and" name="{{ collection }}[__INDEX__][and]" data-field="and" aria-controls="{{ prefix }}-__INDEX__-second" aria-expanded="false">
+    <label class="form-check-label" for="{{ prefix }}-__INDEX__-and">and</label>
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro recall_fields(prefix, collection, label) %}
+  <fieldset class="border rounded-3 p-3 p-md-4" data-recall>
+    <legend class="float-none w-auto px-2 fs-6 fw-semibold">{{ label }} __NUMBER__</legend>
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <label class="form-label" for="{{ prefix }}-__INDEX__-name">Type Name</label>
+        <input class="form-control" type="text" id="{{ prefix }}-__INDEX__-name" name="{{ collection }}[__INDEX__][name]">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="{{ prefix }}-__INDEX__-schedule">Schedule</label>
+        <select class="form-select" id="{{ prefix }}-__INDEX__-schedule" name="{{ collection }}[__INDEX__][schedule]" data-field="schedule">
+          <option>Daily</option><option>Weekly</option><option>Monthly</option>
+        </select>
+      </div>
+    </div>
+    <fieldset data-panel="weekly" class="mb-3" hidden disabled>
+      <label class="form-label" for="{{ prefix }}-__INDEX__-weekday">Day of the week</label>
+      <select class="form-select" id="{{ prefix }}-__INDEX__-weekday" name="{{ collection }}[__INDEX__][weekday]">
+        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}<option>{{ day }}</option>{% endfor %}
+      </select>
+    </fieldset>
+    <fieldset data-panel="monthly" class="mb-3" hidden disabled>
+      <label class="form-label" for="{{ prefix }}-__INDEX__-monthday">Day of the month</label>
+      <select class="form-select" id="{{ prefix }}-__INDEX__-monthday" name="{{ collection }}[__INDEX__][monthday]" aria-describedby="{{ prefix }}-__INDEX__-month-help">
+        {% for day in range(1, 32) %}<option>{{ day }}</option>{% endfor %}
+      </select>
+      <div class="form-text" id="{{ prefix }}-__INDEX__-month-help">For days 29–31, check how the existing automation handles shorter months.</div>
+    </fieldset>
+    <label class="form-label" for="{{ prefix }}-__INDEX__-mode">Recall selection</label>
+    <select class="form-select mb-3" id="{{ prefix }}-__INDEX__-mode" name="{{ collection }}[__INDEX__][mode]" data-field="mode">
+      <option>Simple</option><option>Advanced</option>
+    </select>
+    <fieldset data-panel="simple">
+      <label class="form-label" for="{{ prefix }}-__INDEX__-period">Recall period</label>
+      <select class="form-select" id="{{ prefix }}-__INDEX__-period" name="{{ collection }}[__INDEX__][period]">
+        {% for period in ['Today', 'Tomorrow', 'Next Week', 'Next Month', 'Next Quarter', 'This Month', 'Last Month', 'The Month 3 Months ago', 'The Month 6 Months ago', 'The Month 12 Months ago'] %}<option>{{ period }}</option>{% endfor %}
+      </select>
+    </fieldset>
+    <fieldset data-panel="advanced" hidden disabled>
+      <legend class="fs-6">Recall conditions</legend>
+      {{ condition('first', prefix, collection) }}
+      <fieldset data-panel="second" id="{{ prefix }}-__INDEX__-second" class="mt-3" hidden disabled>
+        <legend class="visually-hidden">Additional condition (and)</legend>
+        {{ condition('second', prefix, collection) }}
+      </fieldset>
+    </fieldset>
+  </fieldset>
+{% endmacro %}
+
+{% block content %}
+<header class="mb-4">
+  <p class="eyebrow mb-2">AUTOMATION SETUP</p>
+  <h1 class="h2">Recall checklist</h1>
+  <p class="text-body-secondary">Capture the recall set and its current schedule.</p>
+</header>
+<noscript><div class="alert alert-warning">Enable JavaScript to add recall types and configure their schedules.</div></noscript>
+<form id="checklist-form" autocomplete="off">
+  <div class="card rounded-4 mb-4">
+    <div class="card-body p-4">
+      <label class="form-label fw-semibold" for="job-type">Job type</label>
+      <select class="form-select" id="job-type" name="job_type">
+        <option value="basic">Basic Checklist</option>
+        <option value="modify">Modify Recall Setup</option>
+      </select>
+    </div>
+  </div>
+  <details class="card rounded-4 mb-4" open>
+    <summary class="p-4 fw-semibold">1. Customer Reference Number</summary>
+    <div class="card-body px-4 pt-0">
+      <label class="form-label" for="crn">Customer Reference Number (CRN)</label>
+      <input class="form-control" type="text" id="crn" name="crn">
+    </div>
+  </details>
+
+  <details class="card rounded-4 mb-4" open>
+    <summary class="p-4 fw-semibold">2. Automation Recall Set Name</summary>
+    <div class="card-body px-4 pt-0">
+      <label class="form-label" for="recall-set-name">Automation Recall Set Name</label>
+      <input class="form-control" type="text" id="recall-set-name" name="recall_set_name">
+    </div>
+  </details>
+
+  <details class="card rounded-4 mb-4" open>
+    <summary class="p-4 fw-semibold">3. Current Recall Set Types and Schedule</summary>
+    <div class="card-body px-4 pt-0">
+      <label class="form-label" for="recall-count">Number of recall types</label>
+      <input class="form-control" style="max-width: 10rem" type="number" min="0" step="1" value="1" id="recall-count" name="recall_count" aria-describedby="count-help" required>
+      <p class="form-text" id="count-help">Enter a whole number. Reducing it hides extra types; increasing it restores their entries until you leave this page.</p>
+      <p id="recall-status" class="small text-body-secondary" role="status"></p>
+      <div id="recall-types" class="d-grid gap-3"></div>
+    </div>
+  </details>
+  <details class="card rounded-4 mb-4" open>
+    <summary class="p-4 fw-semibold">4. Upcoming recall batches</summary>
+    <div class="card-body px-4 pt-0">
+      <p class="text-body-secondary">One batch per current recall type. Type names update automatically from section 3.</p>
+      <p id="batch-empty" class="small text-body-secondary" hidden>Add a recall type in section 3 to enter its upcoming batch.</p>
+      <div id="recall-batches" class="d-grid gap-3"></div>
+    </div>
+  </details>
+
+  <details class="card rounded-4 mb-4" open>
+    <summary class="p-4 fw-semibold">5. Manual recalls</summary>
+    <div class="card-body px-4 pt-0">
+      <label class="form-label" for="manual-patients">Number of patients on manual recalls</label>
+      <input class="form-control" type="text" id="manual-patients" name="manual_patients">
+    </div>
+  </details>
+
+  <details class="card rounded-4 mb-4" open>
+    <summary class="p-4 fw-semibold">6. Test patients – Pre SQL</summary>
+    <div class="card-body px-4 pt-0 d-grid gap-3">
+      {% for number in range(1, 4) %}
+      <fieldset class="border rounded-3 p-3 p-md-4">
+        <legend class="float-none w-auto px-2 fs-6 fw-semibold">Test patient {{ number }}</legend>
+        <div class="row g-3">
+          {% for key, label in [('ID', 'Patient ID'), ('RecallSet', 'Recall set'), ('RecallPeriod', 'Recall period'), ('RecallDate', 'Recall date (dd/mm/yyyy)'), ('RecallType', 'Recall type')] %}
+          <div class="col-md-6">
+            <label class="form-label" for="px{{ number }}-{{ key }}">{{ label }}</label>
+            <input class="form-control" type="text" id="px{{ number }}-{{ key }}" name="Px{{ number }}{{ key }}"{% if key == 'RecallDate' %} placeholder="dd/mm/yyyy or 00/00/0000" maxlength="10" data-date data-allow-zero-date{% endif %}>
+          </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% endfor %}
+    </div>
+  </details>
+
+  <details class="card rounded-4 mb-4" open>
+    <summary class="p-4 fw-semibold">7. Number of patients on each recall period</summary>
+    <div class="card-body px-4 pt-0">
+      <label class="form-label" for="period-count">Number of entries</label>
+      <input class="form-control" style="max-width: 10rem" type="number" min="0" step="1" value="1" id="period-count" name="period_count" aria-describedby="period-help" required>
+      <p class="form-text" id="period-help">Reducing the count hides extra entries; increasing it restores them until you leave this page.</p>
+      <p id="period-status" class="small text-body-secondary" role="status"></p>
+      <div id="recall-periods" class="d-grid gap-3"></div>
+    </div>
+  </details>
+  <details id="requested-section" class="card rounded-4 mb-4" open hidden>
+    <summary class="p-4 fw-semibold">8. Requested Recall Set Types and Schedule</summary>
+    <fieldset id="requested-fields" class="card-body px-4 pt-0" disabled>
+      <p class="text-body-secondary">Record the requested setup here. These entries are separate from the current recall types and upcoming batches.</p>
+      <label class="form-label" for="requested-count">Number of requested recall types</label>
+      <input class="form-control" style="max-width: 10rem" type="number" min="0" step="1" value="1" id="requested-count" name="requested_recall_count" aria-describedby="requested-help" required>
+      <p class="form-text" id="requested-help">Reducing the count hides extra types; increasing it restores their entries until you leave this page.</p>
+      <p id="requested-status" class="small text-body-secondary" role="status"></p>
+      <div id="requested-types" class="d-grid gap-3"></div>
+    </fieldset>
+  </details>
+  <details class="card rounded-4 mb-4" open>
+    <summary id="range-heading" class="p-4 fw-semibold">9. Recall date ranges</summary>
+    <div class="card-body px-4 pt-0">
+      <p id="range-help" class="text-body-secondary">Types follow the order in section 3, newest dates first. Enter each From date except the last. Each following To date is calculated as the previous From date minus one day.</p>
+      <p class="form-text">Use dd-mm-yyyy. The first To date is 01-01-3000 and the last From date is 01-01-1900. A single type covers the entire range.</p>
+      <p id="range-empty" class="small text-body-secondary" hidden>Add current recall types in section 3 to enter their date ranges.</p>
+      <div id="requested-ranges" class="d-grid gap-3"></div>
+    </div>
+  </details>
+  <details class="card rounded-4 mb-4" open>
+    <summary class="p-4 fw-semibold">10. Test Patients – Post SQL</summary>
+    <div class="card-body px-4 pt-0 d-grid gap-3">
+      <p class="text-body-secondary mb-0">Patient IDs and recall sets follow section 6 automatically. Record the recall period, date and type after running SQL.</p>
+      {% for number in range(1, 4) %}
+      <fieldset class="border rounded-3 p-3 p-md-4">
+        <legend class="float-none w-auto px-2 fs-6 fw-semibold">Test patient {{ number }} – Post SQL</legend>
+        <div class="row g-3">
+          {% for key, label in [('ID', 'Patient ID (from section 6)'), ('RecallSet', 'Recall set (from section 6)'), ('RecallPeriod', 'Recall period'), ('RecallDate', 'Recall date (dd/mm/yyyy)'), ('RecallType', 'Recall type')] %}
+          <div class="col-md-6">
+            <label class="form-label" for="post-px{{ number }}-{{ key }}">{{ label }}</label>
+            <input class="form-control" type="text" id="post-px{{ number }}-{{ key }}" name="PostPx{{ number }}{{ key }}"{% if key in ['ID', 'RecallSet'] %} readonly data-patient-source="px{{ number }}-{{ key }}"{% elif key == 'RecallDate' %} placeholder="dd/mm/yyyy or 00/00/0000" maxlength="10" data-date data-allow-zero-date{% endif %}>
+          </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% endfor %}
+    </div>
+  </details>
+  <p class="small text-body-secondary">This first version keeps entries on this page only. Refreshing or leaving the page clears them; saving will come later.</p>
+</form>
+
+<section class="card rounded-4 mb-4" aria-labelledby="output-heading">
+  <div class="card-body p-4">
+    <h2 id="output-heading" class="h5">Ticket notes</h2>
+    <p class="text-body-secondary">Generate your pre-SQL and post-SQL testing notes, review them, then copy into your ticket. Blank values appear as “Not recorded”.</p>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button type="button" id="generate-notes" class="btn btn-success">Generate ticket notes</button>
+      <button type="button" id="copy-notes" class="btn btn-outline-secondary" disabled>Copy formatted notes</button>
+      <button type="button" id="copy-notes-plain" class="btn btn-outline-secondary" disabled>Copy plain text</button>
+    </div>
+    <p id="output-status" class="small text-body-secondary" role="status" aria-live="polite"></p>
+    <div id="notes-preview" class="notes-preview border rounded-3 p-4" tabindex="0" aria-label="Generated ticket notes" hidden></div>
+  </div>
+</section>
+
+<section class="card rounded-4 mb-4" aria-labelledby="agent-heading">
+  <div class="card-body p-4">
+    <h2 id="agent-heading" class="h5">Agent instructions</h2>
+    <p class="text-body-secondary">New Setup is included for Modify Recall Setup only. Expiry is one day before the earliest upcoming batch in section 4. Today uses Australia/Perth time. Review approval wording and ensure the SQL and bulk mod form are attached before sending.</p>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button type="button" id="generate-agent" class="btn btn-success">Generate agent instructions</button>
+      <button type="button" id="copy-agent" class="btn btn-outline-secondary" disabled>Copy formatted instructions</button>
+      <button type="button" id="copy-agent-plain" class="btn btn-outline-secondary" disabled>Copy plain text</button>
+    </div>
+    <p id="agent-status" class="small text-body-secondary" role="status" aria-live="polite"></p>
+    <div id="agent-preview" class="notes-preview border rounded-3 p-4" tabindex="0" aria-label="Generated agent instructions" hidden></div>
+  </div>
+</section>
+
+<template id="range-template">
+  <fieldset class="border rounded-3 p-3 p-md-4" data-range>
+    <legend class="float-none w-auto px-2 fs-6 fw-semibold">Recall date range __NUMBER__</legend>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label" for="range-__INDEX__-name">Recall type name</label>
+        <input class="form-control" id="range-__INDEX__-name" name="requested_ranges[__INDEX__][name]" type="text" placeholder="Enter type name in section 8" readonly>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="range-__INDEX__-from">From date (dd-mm-yyyy)</label>
+        <input class="form-control" id="range-__INDEX__-from" name="requested_ranges[__INDEX__][from]" type="text" placeholder="dd-mm-yyyy" maxlength="10" data-range-from="__INDEX__" aria-describedby="range-__INDEX__-error">
+        <div class="small text-danger mt-1" id="range-__INDEX__-error" aria-live="polite"></div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="range-__INDEX__-to">To date (dd-mm-yyyy)</label>
+        <input class="form-control" id="range-__INDEX__-to" name="requested_ranges[__INDEX__][to]" type="text" placeholder="Calculated from previous From date" readonly>
+      </div>
+    </div>
+  </fieldset>
+</template>
+
+<template id="batch-template">
+  <fieldset class="border rounded-3 p-3 p-md-4" data-batch>
+    <legend class="float-none w-auto px-2 fs-6 fw-semibold">Upcoming batch __NUMBER__</legend>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label" for="batch-__INDEX__-date">Batch date (dd/mm/yyyy)</label>
+        <input class="form-control" type="text" id="batch-__INDEX__-date" name="batches[__INDEX__][date]" placeholder="dd/mm/yyyy" maxlength="10" data-date>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="batch-__INDEX__-type">Recall type name</label>
+        <input class="form-control" type="text" id="batch-__INDEX__-type" name="batches[__INDEX__][type]" placeholder="Enter type name in section 3" readonly>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="batch-__INDEX__-patients">Number of patients</label>
+        <input class="form-control" type="number" min="0" step="1" id="batch-__INDEX__-patients" name="batches[__INDEX__][patients]">
+      </div>
+    </div>
+  </fieldset>
+</template>
+
+<template id="period-template">
+  <fieldset class="border rounded-3 p-3 p-md-4" data-period>
+    <legend class="float-none w-auto px-2 fs-6 fw-semibold">Recall period __NUMBER__</legend>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="period-__INDEX__-months">Months</label>
+        <input class="form-control" type="text" id="period-__INDEX__-months" name="periods[__INDEX__][months]">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="period-__INDEX__-patients">Number of patients</label>
+        <input class="form-control" type="number" min="0" step="1" id="period-__INDEX__-patients" name="periods[__INDEX__][patients]">
+      </div>
+    </div>
+  </fieldset>
+</template>
+
+<template id="recall-type-template">
+  {{ recall_fields('recall', 'recalls', 'Recall type') }}
+</template>
+<template id="requested-type-template">
+  {{ recall_fields('requested', 'requested_recalls', 'Requested recall type') }}
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/checklist.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/output.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/agent-output.js') }}" defer></script>
+{% endblock %}

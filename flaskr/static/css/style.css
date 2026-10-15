@@ -1,0 +1,42 @@
+/* Bootstrap supplies the layout; keep AutoChef's own styling here. */
+:root {
+  --chef-accent: #206b56;
+  --chef-panel: #e9f2ed;
+  --chef-page: #f8faf8;
+}
+
+[data-bs-theme="dark"] {
+  --chef-accent: #99d7bd;
+  --chef-panel: #1d3029;
+  --chef-page: #151c19;
+  --bs-body-bg: #151c19;
+  --bs-body-color: #e4ebe6;
+  --bs-secondary-color: #b0beb5;
+  --bs-border-color: #35443b;
+}
+
+body { background: var(--chef-page); }
+.container { max-width: 1120px; }
+.navbar { background: var(--bs-body-bg); }
+.brand-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--chef-accent);
+  color: var(--chef-page);
+  font-size: 1.4rem;
+}
+.welcome-panel { background: var(--chef-panel); }
+.welcome-copy { max-width: 700px; line-height: 1.7; }
+.eyebrow { color: var(--chef-accent); font-size: .75rem; letter-spacing: .14em; font-weight: 700; }
+.display-4 { letter-spacing: -.045em; }
+.feature-number { color: var(--chef-accent); font-family: monospace; font-size: 1rem; }
+.card { background: var(--bs-body-bg); }
+.skip-link { position: absolute; z-index: 1100; padding: .75rem; background: var(--bs-body-bg); }
+.notes-preview { background: #fff; color: #202124; overflow-wrap: anywhere; }
+
+/* TicketChef shares AutoChef's Bootstrap theme and green accent. */
+.ticketchef-output { line-height: 1.65; min-height: 22rem; resize: vertical; }
+.ticketchef-steps { white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="AutoChef — a little less admin, a little more flow.">
+    <title>{% block title %}AutoChef{% endblock %}</title>
+    <!-- Runs before styles load to prevent a flash of the wrong theme. -->
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body class="d-flex flex-column min-vh-100">
+    <a class="visually-hidden-focusable skip-link" href="#main-content">Skip to content</a>
+    <nav class="navbar navbar-expand-sm border-bottom" aria-label="Main navigation">
+      <div class="container py-2">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{{ url_for('main.home') }}">
+          <span class="brand-mark" aria-hidden="true">a.</span> AutoChef
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="main-nav">
+          <ul class="navbar-nav ms-sm-4 me-auto">
+            <li class="nav-item">
+              <a class="nav-link{% if request.endpoint == 'main.home' %} active{% endif %}"{% if request.endpoint == 'main.home' %} aria-current="page"{% endif %} href="{{ url_for('main.home') }}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link{% if request.blueprint == 'ticketchef' %} active{% endif %}"{% if request.blueprint == 'ticketchef' %} aria-current="page"{% endif %} href="{{ url_for('ticketchef.home') }}">TicketChef</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link{% if request.endpoint == 'main.checklist' %} active{% endif %}"{% if request.endpoint == 'main.checklist' %} aria-current="page"{% endif %} href="{{ url_for('main.checklist') }}">Checklist</a>
+            </li>
+          </ul>
+          <button id="theme-toggle" class="btn btn-outline-secondary btn-sm my-2 my-sm-0" type="button" aria-label="Dark mode" aria-pressed="false" hidden>
+            <span aria-hidden="true">◐</span> <span>Dark mode</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <main id="main-content" class="container flex-grow-1 py-5" tabindex="-1">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container py-4 border-top d-flex flex-wrap gap-2 justify-content-between small text-body-secondary">
+      <span class="fw-semibold">AutoChef</span>
+      <span>A little less admin. A little more flow.</span>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

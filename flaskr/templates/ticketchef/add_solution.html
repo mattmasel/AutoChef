@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Add solution · TicketChef{% endblock %}
+{% block content %}
+<header class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div><p class="eyebrow mb-2">TICKETCHEF / SOLUTION COLLECTION</p><h1 class="h2">Add a solution</h1><p class="text-body-secondary mb-0">Save a useful fix for the next time it comes up.</p></div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('ticketchef.home') }}">Back to TicketChef</a>
+</header>
+<div class="card rounded-4"><div class="card-body p-4 p-md-5">
+  {% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('ticketchef.add_solution') }}">
+    <input type="hidden" name="csrf_token" value="{{ session['ticketchef_csrf'] }}">
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="mb-3"><label class="form-label" for="issue">Solution title</label><input class="form-control" id="issue" name="issue" value="{{ form_data.get('issue', '') }}" placeholder="Change bank slip date" required></div>
+        <div class="row g-3 mb-3">
+          {% for key, label in [('category', 'Category'), ('subcategory', 'Subcategory')] %}<div class="col-sm-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" value="{{ form_data.get(key, '') }}" required></div>{% endfor %}
+        </div>
+        <div class="mb-3"><label class="form-label" for="keywords">Keywords</label><input class="form-control" id="keywords" name="keywords" value="{{ form_data.get('keywords', '') }}" required aria-describedby="keyword-help"><div id="keyword-help" class="form-text">At least three keywords, separated by spaces or commas.</div></div>
+        <div class="mb-3"><label class="form-label" for="solution">Solution steps</label><textarea class="form-control" id="solution" name="solution" rows="9" required>{{ form_data.get('solution', '') }}</textarea></div>
+      </div>
+      <div class="col-lg-5">
+        <div class="welcome-panel rounded-3 p-4 mb-4"><h2 class="h6">Make the next call easier</h2><p class="text-body-secondary mb-0">Use a clear title, the words a customer might use, and steps another agent can follow.</p></div>
+        <label class="form-label" for="notes">Internal notes <span class="text-body-secondary">(optional)</span></label><textarea class="form-control" id="notes" name="notes" rows="6">{{ form_data.get('notes', '') }}</textarea><div class="form-text">Saved with the solution; not included in generated tickets.</div>
+      </div>
+    </div>
+    {% if duplicate_warning %}
+    <div class="alert alert-warning mt-3" id="duplicateBox" role="alert">
+      <h2 class="h5">Possible duplicate found</h2>
+      <p><strong>{{ closest_solution['Issue'] }}</strong> · {{ score|round(0)|int }}% match score</p>
+      <p class="small">Keywords: {{ closest_solution['Keywords'] }}</p>
+      <div class="ticketchef-steps">{{ closest_solution['SolutionSteps'] }}</div>
+    </div>
+    {% endif %}
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <button type="submit" class="btn btn-success">{% if duplicate_warning %}Check revised solution{% else %}Save solution{% endif %}</button>
+      {% if duplicate_warning %}<button type="submit" class="btn btn-outline-warning" name="force_add" value="true">Add anyway</button>{% endif %}
+      <a href="{{ url_for('ticketchef.home') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div></div>
+{% endblock %}
