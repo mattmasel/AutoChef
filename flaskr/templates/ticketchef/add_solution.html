@@ -1,13 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Add solution · TicketChef{% endblock %}
+{% block title %}{{ 'Edit solution' if editing else 'Add solution' }} · TicketChef{% endblock %}
 {% block content %}
+{% set back_url = url_for('ticketchef.manage_solutions', q=query) if editing else url_for('ticketchef.home') %}
 <header class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-  <div><p class="eyebrow mb-2">TICKETCHEF / SOLUTION COLLECTION</p><h1 class="h2">Add a solution</h1><p class="text-body-secondary mb-0">Save a useful fix for the next time it comes up.</p></div>
-  <a class="btn btn-outline-secondary" href="{{ url_for('ticketchef.home') }}">Back to TicketChef</a>
+  <div><p class="eyebrow mb-2">TICKETCHEF / SOLUTION COLLECTION</p><h1 class="h2">{{ 'Edit solution' if editing else 'Add a solution' }}</h1><p class="text-body-secondary mb-0">{{ 'Update the details and save your changes.' if editing else 'Save a useful fix for the next time it comes up.' }}</p></div>
+  <a class="btn btn-outline-secondary" href="{{ back_url }}">{{ 'Back to solutions' if editing else 'Back to TicketChef' }}</a>
 </header>
 <div class="card rounded-4"><div class="card-body p-4 p-md-5">
   {% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
-  <form method="post" action="{{ url_for('ticketchef.add_solution') }}">
+  <form method="post" action="{{ url_for('ticketchef.edit_solution', solution_id=solution_id, q=query) if editing else url_for('ticketchef.add_solution') }}">
     <input type="hidden" name="csrf_token" value="{{ session['ticketchef_csrf'] }}">
     <div class="row g-4">
       <div class="col-lg-7">
@@ -32,9 +33,9 @@
     </div>
     {% endif %}
     <div class="d-flex flex-wrap gap-2 mt-3">
-      <button type="submit" class="btn btn-success">{% if duplicate_warning %}Check revised solution{% else %}Save solution{% endif %}</button>
+      <button type="submit" class="btn btn-success">{% if editing %}Save changes{% elif duplicate_warning %}Check revised solution{% else %}Save solution{% endif %}</button>
       {% if duplicate_warning %}<button type="submit" class="btn btn-outline-warning" name="force_add" value="true">Add anyway</button>{% endif %}
-      <a href="{{ url_for('ticketchef.home') }}" class="btn btn-outline-secondary">Cancel</a>
+      <a href="{{ back_url }}" class="btn btn-outline-secondary">Cancel</a>
     </div>
   </form>
 </div></div>

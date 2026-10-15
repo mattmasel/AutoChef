@@ -257,3 +257,7 @@ existing agent-instruction generation. Visual browser QA was not performed.
 ### No-match tickets
 
 If no solution matches, TicketChef still generates an editable, copyable ticket with the customer name, query and TeamViewer details. The no-match notice is outside the copied text. Matched solutions continue to append their solution steps. The TeamViewer password field displays plain text, as requested. No dependency changes for this update.
+
+### Manage Solutions
+
+Open TicketChef > Manage Solutions to browse or search the working database. Search checks titles, keywords, solution steps, categories and internal notes; all entered words must match somewhere in a record. Edit opens the existing fields. Save changes updates that record in place; Cancel returns to your search without saving. Editing uses the same required fields and minimum of three keywords as adding a solution. Updated steps and keywords are immediately used by ticket generation. There is no delete action. No new dependencies or database migration are required. Keep the instance folder when merging this update.

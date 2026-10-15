@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Manage Solutions · TicketChef{% endblock %}
+{% block content %}
+<header class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div><p class="eyebrow mb-2">TICKETCHEF / SOLUTION COLLECTION</p><h1 class="h2">Manage Solutions</h1><p class="text-body-secondary mb-0">Find a fix, refine its steps and keep your collection useful.</p></div>
+  <div class="d-flex flex-wrap gap-2"><a class="btn btn-outline-secondary" href="{{ url_for('ticketchef.home') }}">Back to TicketChef</a><a class="btn btn-success" href="{{ url_for('ticketchef.add_solution') }}">+ Add solution</a></div>
+</header>
+{% if request.args.get('updated') == '1' %}<div class="alert alert-success" role="status">Solution updated successfully.</div>{% endif %}
+<section class="card rounded-4 mb-4"><div class="card-body p-4">
+  <form method="get" action="{{ url_for('ticketchef.manage_solutions') }}">
+    <label class="form-label fw-semibold" for="solution-search">Search solutions</label>
+    <div class="d-flex flex-wrap gap-2"><input class="form-control flex-grow-1" style="flex-basis: 20rem; width: auto" type="search" name="q" id="solution-search" value="{{ query }}" placeholder="Title, keywords or a step you remember" aria-describedby="search-help"><button class="btn btn-success" type="submit">Search</button>{% if query %}<a class="btn btn-outline-secondary" href="{{ url_for('ticketchef.manage_solutions') }}">Clear</a>{% endif %}</div>
+    <p id="search-help" class="form-text mb-0">Search titles, keywords, steps, categories and notes. All entered words must appear somewhere in a solution.</p>
+  </form>
+</div></section>
+<p class="small text-body-secondary" role="status">{{ solutions|length }} solution{{ '' if solutions|length == 1 else 's' }}{% if query %} found for “{{ query }}”{% endif %}</p>
+<div class="d-grid gap-3">
+{% for solution in solutions %}
+<article class="card rounded-4"><div class="card-body p-4 d-flex flex-wrap align-items-start justify-content-between gap-3">
+  <div class="flex-grow-1" style="flex-basis: 24rem; min-width: 0; overflow-wrap: anywhere">
+    <p class="eyebrow mb-2">{{ solution['Category'] or 'Uncategorised' }}{% if solution['SubCategory'] %} / {{ solution['SubCategory'] }}{% endif %}</p>
+    <h2 class="h5">{{ solution['Issue'] or 'Untitled solution' }}</h2>
+    <p class="text-body-secondary mb-2">{{ (solution['SolutionSteps'] or '')|truncate(220, true) }}</p>
+    <p class="small text-body-secondary mb-0"><strong>Keywords:</strong> {{ solution['Keywords'] or 'None' }}</p>
+  </div>
+  <a class="btn btn-outline-success" href="{{ url_for('ticketchef.edit_solution', solution_id=solution['id'], q=query) }}" aria-label="Edit {{ solution['Issue'] or 'untitled solution' }}">Edit</a>
+</div></article>
+{% else %}
+<div class="welcome-panel rounded-4 p-4"><h2 class="h5">No solutions found</h2><p class="text-body-secondary mb-0">{% if query %}Try fewer words or clear the search to browse the collection.{% else %}Add your first solution to get started.{% endif %}</p></div>
+{% endfor %}
+</div>
+{% endblock %}

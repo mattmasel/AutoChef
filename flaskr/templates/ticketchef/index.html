@@ -3,7 +3,10 @@
 {% block content %}
 <header class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
   <div><p class="eyebrow mb-2">SUPPORT TOOLKIT</p><h1 class="h2 mb-2">TicketChef</h1><p class="text-body-secondary mb-0">Find a solution. Prepare your ticket. Get back to helping.</p></div>
-  <a class="btn btn-outline-success" href="{{ url_for('ticketchef.add_solution') }}">+ Add solution</a>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('ticketchef.manage_solutions') }}">Manage Solutions</a>
+    <a class="btn btn-outline-success" href="{{ url_for('ticketchef.add_solution') }}">+ Add solution</a>
+  </div>
 </header>
 {% if request.args.get('added') == '1' %}<div class="alert alert-success" role="status">Solution added successfully.</div>{% endif %}
 {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
