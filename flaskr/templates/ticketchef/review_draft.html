@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Review draft · TicketChef{% endblock %}
+{% block content %}
+<header class="d-flex flex-wrap justify-content-between gap-3 mb-4"><div><p class="eyebrow mb-2">TICKETCHEF / DRAFT REVIEW</p><h1 class="h2">Review draft</h1><p class="text-body-secondary">Save unfinished edits, or approve a reusable solution.</p></div><a class="btn btn-outline-secondary align-self-start" href="{{ url_for('ticketchef.draft_solutions') }}">Back to drafts</a></header>
+{% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
+{% if request.args.get('saved') %}<div class="alert alert-success" role="status">Draft changes saved.</div>{% endif %}
+<div class="card rounded-4"><div class="card-body p-4">
+<form method="post">
+<input type="hidden" name="csrf_token" value="{{ session['ticketchef_csrf'] }}"><input type="hidden" name="version" value="{{ version }}">
+<div class="row g-3">
+{% for key, label in [('issue','Solution title'),('category','Category'),('subcategory','Subcategory'),('keywords','Keywords')] %}
+<div class="{{ 'col-12' if key in ['issue','keywords'] else 'col-md-6' }}"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" value="{{ form_data.get(key, '') }}"{% if key == 'issue' %} required{% endif %}></div>
+{% endfor %}
+<div class="col-12"><p class="form-text mb-0">Category, subcategory and at least three keywords are needed for approval. You can leave them blank when saving a draft.</p></div>
+<div class="col-12"><label class="form-label" for="solution">Solution steps</label><textarea class="form-control" rows="10" id="solution" name="solution" required>{{ form_data.get('solution', '') }}</textarea><p class="form-text">Keep these reusable: remove customer-specific names, IDs and connection details.</p></div>
+<div class="col-12"><label class="form-label" for="notes">Internal notes (optional)</label><textarea class="form-control" rows="3" id="notes" name="notes">{{ form_data.get('notes', '') }}</textarea></div>
+</div>
+{% if duplicate %}<div class="alert alert-warning mt-4" role="alert"><h2 class="h5">Possible duplicate found</h2><p>{{ duplicate['Issue'] }} · {{ score|round(0)|int }}% match score</p><div class="ticketchef-steps">{{ duplicate['SolutionSteps'] }}</div><a class="alert-link" target="_blank" rel="noopener" href="{{ url_for('ticketchef.edit_solution', solution_id=duplicate['id']) }}">Review existing solution in a new tab</a></div>{% endif %}
+<div class="d-flex flex-wrap gap-2 mt-4">
+<button class="btn btn-outline-success" name="action" value="save">Save draft changes</button>
+<button class="btn btn-success" name="action" value="approve">{{ 'Check approval again' if duplicate else 'Approve solution' }}</button>
+{% if duplicate %}<button class="btn btn-outline-warning" name="action" value="approve_anyway">Approve as separate solution</button>{% endif %}
+<button class="btn btn-outline-danger" name="action" value="discard" formnovalidate onclick="return confirm('Discard this draft from the review queue?');">Discard draft</button>
+<a class="btn btn-outline-secondary" href="{{ url_for('ticketchef.draft_solutions') }}">Cancel</a>
+</div></form></div></div>
+{% endblock %}

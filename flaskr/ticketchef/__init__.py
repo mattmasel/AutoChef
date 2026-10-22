@@ -22,6 +22,18 @@ def init_app(app):
     except FileExistsError:
         pass
 
+    with sqlite3.connect(destination) as conn:
+        conn.execute("""CREATE TABLE IF NOT EXISTS solution_drafts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            capture_key TEXT UNIQUE NOT NULL,
+            issue TEXT NOT NULL, category TEXT NOT NULL DEFAULT '',
+            subcategory TEXT NOT NULL DEFAULT '', keywords TEXT NOT NULL DEFAULT '',
+            solution TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'pending',
+            version INTEGER NOT NULL DEFAULT 1, solution_id INTEGER,
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""")
+
     @app.teardown_appcontext
     def close_connection(error=None):
         connection = g.pop('ticketchef_db', None)

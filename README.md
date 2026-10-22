@@ -261,3 +261,33 @@ If no solution matches, TicketChef still generates an editable, copyable ticket 
 ### Manage Solutions
 
 Open TicketChef > Manage Solutions to browse or search the working database. Search checks titles, keywords, solution steps, categories and internal notes; all entered words must match somewhere in a record. Edit opens the existing fields. Save changes updates that record in place; Cancel returns to your search without saving. Editing uses the same required fields and minimum of three keywords as adding a solution. Updated steps and keywords are immediately used by ticket generation. There is no delete action. No new dependencies or database migration are required. Keep the instance folder when merging this update.
+
+## Draft solutions
+
+When a query has no match, the preview separates customer/TeamViewer details
+from troubleshooting steps. Write the solution in the steps box. Copy ticket
+combines both sections; Save draft solution sends only the original query as a
+suggested title and the steps to the draft queue. Customer-specific text typed
+into the query or steps is not automatically redacted: keep it reusable.
+Saving again on the same page updates the same draft, without leaving the ticket.
+
+Open TicketChef > Draft Solutions to review pending drafts. Edit any field and
+Save draft changes, Approve solution, or Discard draft. Draft saving requires
+only title and steps; approval also requires category, subcategory and at least
+three keywords. Approval checks for similar existing solutions and offers an
+explicit override. Approved drafts enter the existing solutions collection;
+pending/discarded drafts never participate in matching or Manage Solutions.
+Discard removes a draft from the pending queue; its record stays in the local
+database. Repeated approval does not create another solution. Revision checks
+prevent an older open tab overwriting a draft that was edited elsewhere.
+
+The first start adds a separate solution_drafts table to the existing working
+database without replacing existing solutions. No new dependencies. Stop Flask,
+back up instance, merge the update while keeping instance and .venv, and restart.
+Drafts persist in instance/ticketchef/solutions.db. Unsaved ticket text remains
+page-only, so save a draft or copy your ticket before navigating away.
+
+Validation: tested creation on an existing database, persistence, save/retry,
+updates and stale revisions, approval and duplicate review, repeated approval,
+discard, CSRF, escaping, matching exclusion, approved-step matching, and copy/save
+payload separation. Visual browser testing was not performed.
