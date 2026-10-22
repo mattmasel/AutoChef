@@ -4,6 +4,7 @@
 <header class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
   <div><p class="eyebrow mb-2">SUPPORT TOOLKIT</p><h1 class="h2 mb-2">TicketChef</h1><p class="text-body-secondary mb-0">Find a solution. Prepare your ticket. Get back to helping.</p></div>
   <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('ticketchef.draft_solutions') }}">Draft Solutions</a>
     <a class="btn btn-outline-secondary" href="{{ url_for('ticketchef.manage_solutions') }}">Manage Solutions</a>
     <a class="btn btn-outline-success" href="{{ url_for('ticketchef.add_solution') }}">+ Add solution</a>
   </div>
@@ -38,8 +39,18 @@
       {% else %}
       <p class="small text-body-secondary">Matched: <strong>{{ solution['Issue'] }}</strong> · {{ score|round(0)|int }}% match score</p>
       {% endif %}
+      {% if no_match %}
+      <label for="ticket-header" class="form-label">Customer and connection details</label>
+      <textarea id="ticket-header" class="form-control mb-3" rows="7">{{ ticket }}</textarea>
+      <label for="ticket-output" class="form-label">Troubleshooting / solution steps</label>
+      <textarea id="ticket-output" class="form-control ticketchef-output" rows="9" placeholder="Write the steps you performed here…"></textarea>
+      <p class="form-text">Copy ticket combines both sections. Drafts save only the query and steps; remove any customer-specific information you type into those fields before saving.</p>
+      <button type="button" class="btn btn-outline-success mt-2" id="save-draft" data-url="{{ url_for('ticketchef.save_draft') }}" data-csrf="{{ session['ticketchef_csrf'] }}" data-title="{{ form_data.get('customer_query', '') }}">Save draft solution</button>
+      <p id="draft-save-status" class="small text-body-secondary mt-2" role="status" aria-live="polite"></p>
+      {% else %}
       <label for="ticket-output" class="form-label">Review and edit before copying</label>
       <textarea id="ticket-output" class="form-control ticketchef-output" rows="14">{{ ticket }}</textarea>
+      {% endif %}
       <button type="button" class="btn btn-success mt-3" id="copy-ticket">Copy ticket</button>
       <p id="ticket-copy-status" class="small text-body-secondary mt-2 mb-0" role="status" aria-live="polite"></p>
       {% if no_match %}<a href="{{ url_for('ticketchef.add_solution') }}" class="btn btn-outline-success mt-3">Add a solution</a>{% endif %}

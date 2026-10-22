@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Draft Solutions · TicketChef{% endblock %}
+{% block content %}
+<header class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+<div><p class="eyebrow mb-2">TICKETCHEF / REVIEW QUEUE</p><h1 class="h2">Draft Solutions</h1><p class="text-body-secondary mb-0">Capture during calls. Refine when you have a moment.</p></div>
+<a class="btn btn-outline-secondary" href="{{ url_for('ticketchef.home') }}">Back to TicketChef</a>
+</header>
+{% if request.args.get('result') == 'approved' %}<div class="alert alert-success" role="status">Solution approved and added to ticket matching.</div>{% elif request.args.get('result') == 'discarded' %}<div class="alert alert-success" role="status">Draft discarded.</div>{% elif request.args.get('result') == 'reviewed' %}<div class="alert alert-info" role="status">That draft has already been reviewed.</div>{% endif %}
+<p class="small text-body-secondary">{{ drafts|length }} pending draft{{ '' if drafts|length == 1 else 's' }} · Drafts are excluded from solution searches until approved.</p>
+<div class="d-grid gap-3">
+{% for draft in drafts %}
+<article class="card rounded-4"><div class="card-body p-4">
+<div class="d-flex flex-wrap justify-content-between gap-3"><div style="min-width:0;overflow-wrap:anywhere"><h2 class="h5">{{ draft['issue'] }}</h2><p class="small text-body-secondary">Saved {{ draft['created_at'] }} · Updated {{ draft['updated_at'] }}</p></div><a class="btn btn-outline-success align-self-start" href="{{ url_for('ticketchef.review_draft', draft_id=draft['id']) }}">Review draft</a></div>
+<p class="text-body-secondary mb-0" style="overflow-wrap:anywhere">{{ draft['solution']|truncate(240, true) }}</p>
+</div></article>
+{% else %}<div class="welcome-panel rounded-4 p-4"><h2 class="h5">All caught up</h2><p class="mb-0 text-body-secondary">When a query has no match, write your troubleshooting steps and choose Save draft solution.</p></div>{% endfor %}
+</div>
+{% endblock %}
