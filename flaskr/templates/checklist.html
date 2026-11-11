@@ -172,6 +172,15 @@
       <div id="recall-types" class="d-grid gap-3"></div>
     </div>
   </details>
+  <details id="existing-range-section" class="card rounded-4 mb-4" open hidden>
+    <summary class="p-4 fw-semibold">3a. Existing recall date ranges</summary>
+    <fieldset id="existing-range-fields" class="card-body px-4 pt-0" disabled>
+      <p class="text-body-secondary">Types follow the current recall types in section 3, newest dates first. Enter each From date except the last. Each following To date is calculated as the previous From date minus one day.</p>
+      <p class="form-text">Use dd-mm-yyyy. The first To date is 01-01-3000 and the last From date is 01-01-1900. A single type covers the entire range.</p>
+      <p id="existing-range-empty" class="small text-body-secondary" hidden>Add current recall types in section 3 to enter their date ranges.</p>
+      <div id="existing-ranges" class="d-grid gap-3"></div>
+    </fieldset>
+  </details>
   <details class="card rounded-4 mb-4" open>
     <summary class="p-4 fw-semibold">4. Upcoming recall batches</summary>
     <div class="card-body px-4 pt-0">
@@ -304,6 +313,27 @@
       <div class="col-md-4">
         <label class="form-label" for="range-__INDEX__-to">To date (dd-mm-yyyy)</label>
         <input class="form-control" id="range-__INDEX__-to" name="requested_ranges[__INDEX__][to]" type="text" placeholder="Calculated from previous From date" readonly>
+      </div>
+    </div>
+  </fieldset>
+</template>
+
+<template id="existing-range-template">
+  <fieldset class="border rounded-3 p-3 p-md-4" data-range>
+    <legend class="float-none w-auto px-2 fs-6 fw-semibold">Recall date range __NUMBER__</legend>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label" for="existing-range-__INDEX__-name">Recall type name</label>
+        <input class="form-control" id="existing-range-__INDEX__-name" name="existing_ranges[__INDEX__][name]" type="text" placeholder="Enter type name in section 3" readonly>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="existing-range-__INDEX__-from">From date (dd-mm-yyyy)</label>
+        <input class="form-control" id="existing-range-__INDEX__-from" name="existing_ranges[__INDEX__][from]" type="text" placeholder="dd-mm-yyyy" maxlength="10" data-existing-range-from="__INDEX__" aria-describedby="existing-range-__INDEX__-error">
+        <div class="small text-danger mt-1" id="existing-range-__INDEX__-error" aria-live="polite"></div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="existing-range-__INDEX__-to">To date (dd-mm-yyyy)</label>
+        <input class="form-control" id="existing-range-__INDEX__-to" name="existing_ranges[__INDEX__][to]" type="text" placeholder="Calculated from previous From date" readonly>
       </div>
     </div>
   </fieldset>

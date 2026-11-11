@@ -307,3 +307,11 @@ Validation: tested creation on an existing database, persistence, save/retry,
 updates and stale revisions, approval and duplicate review, repeated approval,
 discard, CSRF, escaping, matching exclusion, approved-step matching, and copy/save
 payload separation. Visual browser testing was not performed.
+
+Modify Recall Setup also includes Existing recall date ranges directly below
+Current Recall Set Types and Schedule. These follow the current type names and
+count, independently of the requested ranges. Both use newest-first From dates,
+calculate each following To date as the preceding From date minus one day, and
+use 01-01-3000 / 01-01-1900 for the outer boundaries. Existing ranges appear in
+Pre-SQL ticket notes for Modify Recall Setup only. Entries survive count and
+job-type changes while the page remains open.

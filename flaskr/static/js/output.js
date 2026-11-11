@@ -27,7 +27,7 @@
     // Only validate fields included in the testing output, not requested changes.
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const relevant = [...form.querySelectorAll("input, select")].filter((field) => {
-      return !field.matches(":disabled") && /^(recall_count|period_count|recalls\[|batches\[|periods\[|Px\d|PostPx\d)/.test(field.name);
+      return !field.matches(":disabled") && /^(recall_count|period_count|recalls\[|existing_ranges\[|batches\[|periods\[|Px\d|PostPx\d)/.test(field.name);
     });
     for (const field of relevant) {
       if (field.matches("[data-date]")) field.dispatchEvent(new Event("input", { bubbles: true }));
@@ -96,6 +96,14 @@
       line("p", `${value(`${prefix}[name]`)} - ${schedule} - ${period}`);
     }
     if (!total) line("p", "None recorded");
+    if (document.getElementById("job-type").value === "modify") {
+      line("h3", "Existing recall date ranges");
+      for (let i = 0; i < total; i++) {
+        const prefix = `existing_ranges[${i}]`;
+        line("p", `${value(`${prefix}[name]`)} - ${value(`${prefix}[from]`)} to ${value(`${prefix}[to]`)}`);
+      }
+      if (!total) line("p", "None recorded");
+    }
     line("h3", "Number of Patients for Each Recall Period");
     for (let i = 0; i < periods; i++) {
       line("p", `Patients on ${value(`periods[${i}][months]`)} month period - ${value(`periods[${i}][patients]`)}`);

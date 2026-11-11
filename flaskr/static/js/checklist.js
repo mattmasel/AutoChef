@@ -17,11 +17,16 @@
   const draftsByJob = { basic: [], modify: [] };
   const isBasic = () => jobType.value === "basic";
   const ranges = [];
+  const existingRanges = [];
+  const existingDrafts = [];
+  let existingCount = 0;
   let rangeDrafts = draftsByJob.basic;
   let activeRangeCount = 0;
 
   function updateJobType() {
     const basic = isBasic();
+    document.getElementById("existing-range-section").hidden = basic;
+    document.getElementById("existing-range-fields").disabled = basic;
     document.getElementById("requested-section").hidden = basic;
     document.getElementById("requested-fields").disabled = basic;
     rangeDrafts = draftsByJob[basic ? "basic" : "modify"];
@@ -51,18 +56,23 @@
   }
 
   function syncRanges() {
+    syncRangeGroup("range", activeRangeCount, rangeDrafts, isBasic() ? "recall" : "requested", isBasic() ? "3" : "8");
+    syncRangeGroup("existing-range", existingCount, existingDrafts, "recall", "3");
+  }
+
+  function syncRangeGroup(id, total, drafts, source, section) {
     let previous = null;
     const minimum = parseRangeDate("01-01-1900");
     const maximum = parseRangeDate("01-01-3000");
-    for (let index = 0; index < activeRangeCount; index++) {
-      const from = document.getElementById(`range-${index}-from`);
-      const to = document.getElementById(`range-${index}-to`);
-      const last = index === activeRangeCount - 1;
-      document.getElementById(`range-${index}-name`).value =
-        document.getElementById(`${isBasic() ? "recall" : "requested"}-${index}-name`).value;
-      document.getElementById(`range-${index}-name`).placeholder = `Enter type name in section ${isBasic() ? "3" : "8"}`;
+    for (let index = 0; index < total; index++) {
+      const from = document.getElementById(`${id}-${index}-from`);
+      const to = document.getElementById(`${id}-${index}-to`);
+      const last = index === total - 1;
+      document.getElementById(`${id}-${index}-name`).value =
+        document.getElementById(`${source}-${index}-name`).value;
+      document.getElementById(`${id}-${index}-name`).placeholder = `Enter type name in section ${section}`;
       from.readOnly = last;
-      from.value = last ? "01-01-1900" : rangeDrafts[index];
+      from.value = last ? "01-01-1900" : drafts[index];
       let end = null;
       if (index === 0) end = maximum;
       else if (previous) {
@@ -79,7 +89,7 @@
       }
       from.setCustomValidity(error);
       from.setAttribute("aria-invalid", String(Boolean(error)));
-      document.getElementById(`range-${index}-error`).textContent = error;
+      document.getElementById(`${id}-${index}-error`).textContent = error;
       // Never propagate an invalid or out-of-order boundary into later rows.
       previous = !error && start && (index === 0 || previous) ? start : null;
     }
@@ -201,7 +211,13 @@
     setVisibleRows(batches, total);
     document.getElementById("batch-empty").hidden = total !== 0;
     syncBatchNames();
+    while (existingRanges.length < total) existingRanges.push(addRow("existing-range-template", "existing-ranges", existingRanges.length));
+    while (existingDrafts.length < total) existingDrafts.push("");
+    existingCount = total;
+    setVisibleRows(existingRanges, total);
+    document.getElementById("existing-range-empty").hidden = total !== 0;
     if (isBasic()) updateRanges(total);
+    else syncRangeGroup("existing-range", existingCount, existingDrafts, "recall", "3");
   }
 
   // Use change rather than every keystroke so multi-digit counts can be entered.
@@ -218,6 +234,11 @@
   document.getElementById("requested-ranges").addEventListener("input", (event) => {
     if (!event.target.matches("[data-range-from]") || event.target.readOnly) return;
     rangeDrafts[Number(event.target.dataset.rangeFrom)] = event.target.value;
+    syncRanges();
+  });
+  document.getElementById("existing-ranges").addEventListener("input", event => {
+    if (!event.target.matches("[data-existing-range-from]") || event.target.readOnly) return;
+    existingDrafts[Number(event.target.dataset.existingRangeFrom)] = event.target.value;
     syncRanges();
   });
   container.addEventListener("input", () => { syncBatchNames(); syncRanges(); });
