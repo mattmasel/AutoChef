@@ -32,6 +32,9 @@
             <li class="nav-item">
               <a class="nav-link{% if request.endpoint == 'main.checklist' %} active{% endif %}"{% if request.endpoint == 'main.checklist' %} aria-current="page"{% endif %} href="{{ url_for('main.checklist') }}">Checklist</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link{% if request.blueprint == 'todo' %} active{% endif %}" {% if request.blueprint == 'todo' %}aria-current="page"{% endif %} href="{{ url_for('todo.index') }}">Todo</a>
+            </li>
           </ul>
           <button id="theme-toggle" class="btn btn-outline-secondary btn-sm my-2 my-sm-0" type="button" aria-label="Dark mode" aria-pressed="false" hidden>
             <span aria-hidden="true">◐</span> <span>Dark mode</span>
