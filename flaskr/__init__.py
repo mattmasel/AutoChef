@@ -23,4 +23,6 @@ def create_app(test_config=None):
     app.register_blueprint(main)
     from . import ticketchef
     ticketchef.init_app(app)
+    from . import todo
+    todo.init_app(app)
     return app

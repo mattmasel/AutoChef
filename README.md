@@ -315,3 +315,26 @@ calculate each following To date as the preceding From date minus one day, and
 use 01-01-3000 / 01-01-1900 for the outer boundaries. Existing ranges appear in
 Pre-SQL ticket notes for Modify Recall Setup only. Entries survive count and
 job-type changes while the page remains open.
+
+## Automation Todo
+
+Open Todo beside Checklist in the navbar. Create one issue per ticket with its
+CRN and a short title; multiple tickets can share a CRN. Select an issue to edit
+its ticket number, http(s) ticket link, tasks and working notes. Add tasks one
+per line, tick Completed, or mark individual tasks for removal. Click Save
+changes to persist all edits. The issue list shows completed/total task counts.
+Unsaved edits trigger a browser navigation warning. Concurrent stale saves are
+rejected; copy your unsaved text before reloading the latest issue.
+
+Finished issues can be permanently deleted using the confirmation checkbox;
+this also deletes their tasks and notes. There is no archive. Zoho tickets are
+not modified. Checklist outputs remain in Zoho rather than being duplicated.
+
+Data lives in instance/todo.db (override with FLASK_TODO_DATABASE if needed).
+The database is created automatically on first start. Keep your existing
+instance and .venv folders when merging updates, and restart Flask. No new
+Python dependencies. Checklist has been removed from the planned On the menu
+cards; its navbar link is retained.
+
+Verified issue/task lifecycle, restart persistence, separate issues for one
+CRN, stale saves, CSRF, unsafe links, escaped notes and cascade deletion.
