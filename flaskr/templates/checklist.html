@@ -29,6 +29,69 @@
 </div>
 {% endmacro %}
 
+{% macro schedule_checks(prefix, collection, key, title, options, selected=[]) %}
+<fieldset class="mb-3" data-schedule-group="{{ key }}">
+  <legend class="fs-6">{{ title }}</legend>
+  <div class="schedule-options{% if key == 'monthdays' %} schedule-numbers{% endif %}">
+    {% for option in options %}
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="{{ prefix }}-__INDEX__-{{ key }}-{{ loop.index }}" name="{{ collection }}[__INDEX__][{{ key }}]" value="{{ option }}"{% if option in selected %} checked{% endif %}>
+      <label class="form-check-label" for="{{ prefix }}-__INDEX__-{{ key }}-{{ loop.index }}">{{ option }}</label>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="small text-danger mt-2" data-group-error aria-live="polite"></div>
+</fieldset>
+{% endmacro %}
+
+{% macro schedule_fields(prefix, collection) %}
+{% set weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+{% set months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] %}
+<fieldset data-panel="daily" class="mb-3">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <label for="{{ prefix }}-__INDEX__-daily-interval">Repeat every</label>
+    <input class="form-control schedule-interval" type="number" min="1" step="1" value="1" required id="{{ prefix }}-__INDEX__-daily-interval" name="{{ collection }}[__INDEX__][daily_interval]" aria-label="Repeat every number of days">
+    <span>days</span>
+  </div>
+</fieldset>
+<fieldset data-panel="weekly" class="mb-3" hidden disabled>
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <label for="{{ prefix }}-__INDEX__-weekly-interval">Repeat every</label>
+    <input class="form-control schedule-interval" type="number" min="1" step="1" value="1" required id="{{ prefix }}-__INDEX__-weekly-interval" name="{{ collection }}[__INDEX__][weekly_interval]" aria-label="Repeat every number of weeks">
+    <span>weeks on</span>
+  </div>
+  {{ schedule_checks(prefix, collection, 'weekdays', 'Days of the week', weekdays, ['Monday']) }}
+</fieldset>
+<fieldset data-panel="monthly" class="mb-3" hidden disabled>
+  {{ schedule_checks(prefix, collection, 'months', 'Months', months, months) }}
+  <fieldset class="mb-3">
+    <legend class="fs-6">Monthly timing</legend>
+    <div class="d-flex flex-wrap gap-4">
+      <div class="form-check">
+        <input class="form-check-input" type="radio" id="{{ prefix }}-__INDEX__-monthly-number" name="{{ collection }}[__INDEX__][monthly_mode]" value="numbers" checked aria-controls="{{ prefix }}-__INDEX__-monthly-numbers">
+        <label class="form-check-label" for="{{ prefix }}-__INDEX__-monthly-number">Day Number(s)</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" id="{{ prefix }}-__INDEX__-monthly-on" name="{{ collection }}[__INDEX__][monthly_mode]" value="on" aria-controls="{{ prefix }}-__INDEX__-monthly-pattern">
+        <label class="form-check-label" for="{{ prefix }}-__INDEX__-monthly-on">On</label>
+      </div>
+    </div>
+  </fieldset>
+  <fieldset data-panel="monthly-numbers" id="{{ prefix }}-__INDEX__-monthly-numbers">
+    {{ schedule_checks(prefix, collection, 'monthdays', 'Day Number(s)', (range(1, 32)|list) + ['Last'], [1]) }}
+    <p class="form-text">Last means the last calendar day of each selected month (28, 29, 30 or 31). It is separate from selecting day 31.</p>
+  </fieldset>
+  <fieldset data-panel="monthly-pattern" id="{{ prefix }}-__INDEX__-monthly-pattern" hidden disabled>
+    {{ schedule_checks(prefix, collection, 'ordinals', 'On', ['First', 'Second', 'Third', 'Fourth', 'Last'], ['First']) }}
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" id="{{ prefix }}-__INDEX__-all-monthly-days" data-select-all-days>
+      <label class="form-check-label" for="{{ prefix }}-__INDEX__-all-monthly-days">Select all days</label>
+    </div>
+    {{ schedule_checks(prefix, collection, 'monthly_weekdays', 'Days of the week', weekdays, ['Monday']) }}
+  </fieldset>
+</fieldset>
+{% endmacro %}
+
 {% macro recall_fields(prefix, collection, label) %}
   <fieldset class="border rounded-3 p-3 p-md-4" data-recall>
     <legend class="float-none w-auto px-2 fs-6 fw-semibold">{{ label }} __NUMBER__</legend>
@@ -40,23 +103,11 @@
       <div class="col-md-6">
         <label class="form-label" for="{{ prefix }}-__INDEX__-schedule">Schedule</label>
         <select class="form-select" id="{{ prefix }}-__INDEX__-schedule" name="{{ collection }}[__INDEX__][schedule]" data-field="schedule">
-          <option>Daily</option><option>Weekly</option><option>Monthly</option>
+          <option>Daily</option><option>Weekly</option><option>Monthly</option><option>One time</option>
         </select>
       </div>
     </div>
-    <fieldset data-panel="weekly" class="mb-3" hidden disabled>
-      <label class="form-label" for="{{ prefix }}-__INDEX__-weekday">Day of the week</label>
-      <select class="form-select" id="{{ prefix }}-__INDEX__-weekday" name="{{ collection }}[__INDEX__][weekday]">
-        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}<option>{{ day }}</option>{% endfor %}
-      </select>
-    </fieldset>
-    <fieldset data-panel="monthly" class="mb-3" hidden disabled>
-      <label class="form-label" for="{{ prefix }}-__INDEX__-monthday">Day of the month</label>
-      <select class="form-select" id="{{ prefix }}-__INDEX__-monthday" name="{{ collection }}[__INDEX__][monthday]" aria-describedby="{{ prefix }}-__INDEX__-month-help">
-        {% for day in range(1, 32) %}<option>{{ day }}</option>{% endfor %}
-      </select>
-      <div class="form-text" id="{{ prefix }}-__INDEX__-month-help">For days 29–31, check how the existing automation handles shorter months.</div>
-    </fieldset>
+    {{ schedule_fields(prefix, collection) }}
     <label class="form-label" for="{{ prefix }}-__INDEX__-mode">Recall selection</label>
     <select class="form-select mb-3" id="{{ prefix }}-__INDEX__-mode" name="{{ collection }}[__INDEX__][mode]" data-field="mode">
       <option>Simple</option><option>Advanced</option>
@@ -303,6 +354,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/recall-schedule.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/checklist.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/output.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/agent-output.js') }}" defer></script>

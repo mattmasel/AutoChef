@@ -40,3 +40,8 @@ body { background: var(--chef-page); }
 /* TicketChef shares AutoChef's Bootstrap theme and green accent. */
 .ticketchef-output { line-height: 1.65; min-height: 22rem; resize: vertical; }
 .ticketchef-steps { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Flexible multi-select recall schedules. */
+.schedule-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: .5rem 1rem; }
+.schedule-numbers { grid-template-columns: repeat(auto-fit, minmax(4rem, 1fr)); }
+.schedule-interval { width: 6rem; }

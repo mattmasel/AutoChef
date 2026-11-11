@@ -167,12 +167,10 @@
     panel.disabled = !visible;
   }
 
-  function updateEntry(entry) {
-    const schedule = entry.querySelector('[data-field="schedule"]').value;
+  function updateEntry(entry, target) {
     const advanced = entry.querySelector('[data-field="mode"]').value === "Advanced";
     const and = entry.querySelector('[data-field="and"]');
-    showPanel(entry, "weekly", schedule === "Weekly");
-    showPanel(entry, "monthly", schedule === "Monthly");
+    window.AutoChefSchedule.update(entry, target);
     showPanel(entry, "simple", !advanced);
     showPanel(entry, "advanced", advanced);
     showPanel(entry, "second", advanced && and.checked);
@@ -214,7 +212,7 @@
   requestedContainer.addEventListener("input", syncRanges);
   requestedContainer.addEventListener("change", (event) => {
     const entry = event.target.closest("[data-recall]");
-    if (entry) updateEntry(entry);
+    if (entry) updateEntry(entry, event.target);
     syncRanges();
   });
   document.getElementById("requested-ranges").addEventListener("input", (event) => {
@@ -225,7 +223,7 @@
   container.addEventListener("input", () => { syncBatchNames(); syncRanges(); });
   container.addEventListener("change", (event) => {
     const entry = event.target.closest("[data-recall]");
-    if (entry) updateEntry(entry);
+    if (entry) updateEntry(entry, event.target);
     syncBatchNames();
     syncRanges();
   });
