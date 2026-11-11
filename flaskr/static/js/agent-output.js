@@ -28,6 +28,7 @@
       document.getElementById(id).dispatchEvent(new Event("change", { bubbles: true }));
     }
     const modify = document.getElementById("job-type").value === "modify";
+    form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const fields = [...form.querySelectorAll("input, select")].filter(field =>
       !field.matches(":disabled") && /^(recall_count|requested_recall_count|recalls\[|requested_recalls\[|requested_ranges\[|batches\[.*\[date\])/.test(field.name));
     function fail(message, field) {
@@ -81,9 +82,7 @@
       }
       for (let i = 0; i < count; i++) {
         const prefix = `${collection}[${i}]`;
-        let schedule = value(`${prefix}[schedule]`);
-        if (schedule === "Weekly") schedule += ` ${value(`${prefix}[weekday]`)}`;
-        if (schedule === "Monthly") schedule += ` ${value(`${prefix}[monthday]`)}`;
+        const schedule = window.AutoChefSchedule.format(data, prefix);
         let period = value(`${prefix}[period]`);
         if (value(`${prefix}[mode]`) === "Advanced") {
           period = condition(prefix, "first");

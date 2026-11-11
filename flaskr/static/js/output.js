@@ -25,6 +25,7 @@
       document.getElementById(id).dispatchEvent(new Event("change", { bubbles: true }));
     }
     // Only validate fields included in the testing output, not requested changes.
+    form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const relevant = [...form.querySelectorAll("input, select")].filter((field) => {
       return !field.matches(":disabled") && /^(recall_count|period_count|recalls\[|batches\[|periods\[|Px\d|PostPx\d)/.test(field.name);
     });
@@ -85,9 +86,7 @@
     }
     for (let i = 0; i < total; i++) {
       const prefix = `recalls[${i}]`;
-      let schedule = value(`${prefix}[schedule]`);
-      if (schedule === "Weekly") schedule += ` ${value(`${prefix}[weekday]`)}`;
-      if (schedule === "Monthly") schedule += ` ${value(`${prefix}[monthday]`)}`;
+      const schedule = window.AutoChefSchedule.format(data, prefix);
       let period = value(`${prefix}[period]`);
       if (data.get(`${prefix}[mode]`) === "Advanced") {
         period = condition(prefix, "first");

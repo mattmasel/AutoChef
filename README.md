@@ -262,6 +262,22 @@ If no solution matches, TicketChef still generates an editable, copyable ticket 
 
 Open TicketChef > Manage Solutions to browse or search the working database. Search checks titles, keywords, solution steps, categories and internal notes; all entered words must match somewhere in a record. Edit opens the existing fields. Save changes updates that record in place; Cancel returns to your search without saving. Editing uses the same required fields and minimum of three keywords as adding a solution. Updated steps and keywords are immediately used by ticket generation. There is no delete action. No new dependencies or database migration are required. Keep the instance folder when merging this update.
 
+## Recall schedules
+
+Current and requested recall types each support One time, Daily (repeat every
+number of days), Weekly (repeat every number of weeks on selected weekdays),
+and Monthly. Monthly schedules let you choose months and either day numbers
+1–31 plus Last, or First/Second/Third/Fourth/Last with selected weekdays.
+Last means the final calendar day of the month; selecting 31 alone does not
+mean the last day of shorter months. Select all days toggles all seven weekdays
+in the monthly On option. Repeat intervals must be positive whole numbers,
+and each active checkbox group needs at least one selection.
+
+Selections are retained when switching schedules or monthly options. Only
+active options appear in generated ticket notes and agent instructions.
+One time has no repeat settings. This checklist documents schedules; it does
+not run automation or calculate its execution dates. No new dependencies.
+
 ## Draft solutions
 
 When a query has no match, the preview separates customer/TeamViewer details
