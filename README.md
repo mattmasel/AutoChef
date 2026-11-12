@@ -358,9 +358,12 @@ adjoining ranges for script reassignment; these are NOT used as batch coverage.
    old batches that have already been created. Multiple rows per type are allowed;
    no rows for a type means no run for it within that window. Remove unused rows.
 5. Confirm preview completeness and that stages correspond in the same order.
-6. Check coverage, review any flagged ranges against actual patients, then select
-   a script decision and record the evidence. Any coverage/schedule/range change
-   resets the decision. Entries are page-only, like the existing checklist.
+6. Check coverage. Any potential gap automatically requires corrective scripts,
+   even if no actual patients occupy the flagged ranges. No patient search or
+   count is required, and a manual decision cannot override this requirement.
+   When no gap is detected, record the review decision and notes; an incomplete
+   assessment cannot approve a no-script change. Any coverage/schedule/range
+   change resets manual decisions. Entries are page-only, like the existing checklist.
 
 The engine partitions recall-date scopes at batch boundaries and follows each
 hypothetical cohort chronologically from its starting type. Creating a batch
@@ -390,7 +393,8 @@ review evidence. Calculated existing/requested reassignment ranges appear when
 there is an unresolved potential gap or a reviewer says scripts are required;
 they are omitted after a valid no-script decision. Potential ranges are not an
 automatically approved SQL scope. Agent booking instructions require a valid
-review decision and notes. Script-required jobs keep the SQL expiry, bulk-mod
+script decision (automatic for a detected gap, otherwise reviewed with notes).
+Script-required jobs keep the SQL expiry, bulk-mod
 wording and execution order. No-script jobs omit these and include schedule
 change/verification steps. Incomplete assessments cannot approve a no-script job.
 
@@ -399,3 +403,64 @@ covered progression, later pickup, date boundaries, final-stage behaviour,
 ambiguous ordering, invalid inputs, decision invalidation, conditional ticket
 notes/agent instructions and unchanged Basic workflow. Visual browser testing
 was not performed for this update.
+
+## Basic Checklist: current-setup coverage (section 4a)
+
+Use this when the customer is keeping their existing schedule. Enter the
+assessment start/end (practice local time) and copy all upcoming runs inside it,
+including each type, creation/send time, and inclusive Recall Date From/To.
+Use at least two runs per type; six upcoming runs is a useful starting point.
+These are actual preview ranges, not the reassignment ranges in section 9.
+No patient records, searches or counts are required.
+
+The checker merges the supplied ranges for each type and finds holes between
+them. For example, fortnightly runs covering 1–7 October and 15–21 October flag
+8–14 October. Adjacent inclusive ranges have no hole; a supplied catch-up run
+can fill one. It also simulates hypothetical cohorts leaving each non-final
+batch, advancing immediately through later runs with an unchanged recall date.
+An earlier downstream batch cannot pick up a cohort that has not arrived yet.
+If later runs move past a cohort without picking it up, this is a potential
+progression gap. Finite-preview boundary cases are reported separately, not
+mislabelled as gaps.
+
+Any detected gap means scripts are required regardless of actual patient
+counts, even if another type needs more preview rows. The result has no manual
+no-script override. A recurring schedule gap also needs schedule correction;
+a one-off reassignment cannot prevent future gaps. Flagged ranges are evidence
+for review, not an automatically approved SQL reassignment scope.
+
+The final type is special: sending its reminder completes the simulation even
+though the patient stays on that type. Dates before its earliest supplied range
+are not flagged. Internal holes in its preview apply only to hypothetical
+patients still awaiting that reminder. This does not identify whether a real
+final-type patient has already been sent their reminder. Do not re-enrol
+completed patients based on this check.
+
+A clear result is limited to the supplied preview. It cannot prove historical
+coverage, detect all existing stranded patients outside the preview, or prove
+future coverage beyond it. More runs may resolve a flagged delay. Missing or
+invalid entries, unconfirmed completeness, unknown same-time ordering, or too
+few runs prevent a clear result. A possible repeated final reminder from a
+simulated cohort also requires review.
+
+Basic ticket notes and agent instructions include the current result (or
+explicitly say not assessed). Changes to the current schedule or coverage
+inputs invalidate confirmation; generated outputs are regenerated before
+copying. Basic's existing SQL booking workflow is retained for corrective
+work: a clear preview does not cancel separately required SQL. Modify Recall
+Setup keeps its separate old/new comparison unchanged. Entries remain page-only.
+
+Verification:
+
+```sh
+node tests/current-coverage.cjs
+node tests/current-coverage-ui.cjs
+node tests/coverage-policy.cjs
+```
+
+The tests cover fortnightly holes, inclusive and leap-day boundaries, catch-up
+runs, chronological stage hand-offs, final completion, preview limits, invalid
+input and the mandatory-script policy. A browser-independent DOM harness also
+covers Basic notes/instructions, stale results, switching job types and row
+removal. Flask template rendering passed. Full visual browser testing could
+not run in the development environment because Chromium launch was blocked.

@@ -190,6 +190,25 @@
     </div>
   </details>
 
+  <details id="current-coverage-section" class="card rounded-4 mb-4" open>
+    <summary class="p-4 fw-semibold">4a. Check current setup for gaps</summary>
+    <fieldset id="current-coverage-fields" class="card-body px-4 pt-0">
+      <p class="text-body-secondary">Check the existing schedule without proposing a change. Copy the actual From/To dates from several upcoming runs for every current type (for example, the next six). A fortnightly run that covers only one week leaves an uncovered week between runs.</p>
+      <p class="form-text">Use at least two runs per type and include all runs inside the window. These are batch coverage ranges, not the reassignment ranges in section 9. Patient counts are not needed. Dates and times use the practice's local time.</p>
+      <div class="row g-3 mb-3">
+        <div class="col-md"><label class="form-label" for="current-coverage-start">Assessment start</label><input id="current-coverage-start" type="datetime-local" class="form-control"></div>
+        <div class="col-md"><label class="form-label" for="current-coverage-end">Assessment end</label><input id="current-coverage-end" type="datetime-local" class="form-control"></div>
+      </div>
+      <div id="current-coverage-batches" class="d-grid gap-3 mb-3"></div>
+      <button id="current-coverage-add" type="button" class="btn btn-outline-secondary mb-3">Add current batch</button>
+      <label class="form-check mb-3"><input id="current-coverage-confirm" type="checkbox" class="form-check-input"> I have included all current-setup runs within this window, with reminder types in progression order and the final reminder last.</label>
+      <button id="current-coverage-check" type="button" class="btn btn-success mb-3">Check current setup</button>
+      <div id="current-coverage-result" class="border rounded-3 p-3 mb-3" role="status" aria-live="polite">Not assessed yet.</div>
+      <p class="form-text">Any potential gap requires corrective scripts, even if no patients occupy the range. An ongoing schedule gap also needs correction. Results appear in ticket notes and agent instructions; this check does not generate or run SQL.</p>
+      <p class="form-text">After the final reminder, patients stay on that type and are finished. Older dates outside its preview are not flagged. A gap inside the final-type preview concerns patients still awaiting that reminder. Historical gaps and dates outside the preview cannot be established from these runs alone.</p>
+    </fieldset>
+  </details>
+
   <details class="card rounded-4 mb-4" open>
     <summary class="p-4 fw-semibold">5. Manual recalls</summary>
     <div class="card-body px-4 pt-0">
@@ -258,17 +277,16 @@
       <p class="small text-body-secondary">Added, removed or reordered stages need manual review. Date comparison cannot establish actual patient counts, exclusions, treatment resets or coverage beyond the assessment window. Same-time overlapping batches may require manual review.</p>
       <button id="coverage-check" type="button" class="btn btn-success mb-3">Check coverage</button>
       <div id="coverage-result" class="border rounded-3 p-3 mb-4" role="status" aria-live="polite">Not assessed yet.</div>
-      <label for="coverage-decision" class="form-label">Patient check / script decision</label>
+      <p class="form-text">Any detected potential gap automatically requires corrective scripts, even if no patients actually occupy that range. No patient search or count is required, and this requirement cannot be overridden below. An incomplete assessment still needs review.</p>
+      <label for="coverage-decision" class="form-label">Review decision when no gap is detected</label>
       <select id="coverage-decision" class="form-select mb-3">
         <option value="pending">Pending — review required</option>
-        <option value="required">Affected patients confirmed — scripts required</option>
-        <option value="none">Checked flagged ranges — no affected patients, no scripts required</option>
         <option value="clear">Reviewed clear assessment — no scripts required within assessed scope</option>
         <option value="manual">Manual review — scripts required</option>
       </select>
       <label for="coverage-evidence" class="form-label">Review evidence / decision notes</label>
-      <textarea id="coverage-evidence" class="form-control" rows="3" placeholder="Record the patient count/check, review scope and reason for your script decision. Do not enter patient identifiers."></textarea>
-      <p class="form-text">A decision and review notes are required before generating booking instructions. Changes to coverage inputs, schedules or script ranges reset the decision to Pending. This page does not generate or run SQL.</p>
+      <textarea id="coverage-evidence" class="form-control" rows="3" placeholder="Record the review scope and reason for any manual decision. Patient counts are not required. Do not enter patient identifiers."></textarea>
+      <p class="form-text">A detected gap requires scripts automatically and retains the corrective date ranges in the output. Otherwise, a decision and review notes are required before generating booking instructions. Changes to coverage inputs, schedules or script ranges reset manual decisions to Pending and recalculate the requirement. This page does not generate or run SQL.</p>
     </fieldset>
   </details>
   <details class="card rounded-4 mb-4" open>
@@ -319,7 +337,7 @@
 <section class="card rounded-4 mb-4" aria-labelledby="agent-heading">
   <div class="card-body p-4">
     <h2 id="agent-heading" class="h5">Agent instructions</h2>
-    <p class="text-body-secondary">Modify Recall Setup requires a reviewed coverage/script decision in 8a. SQL and bulk modification instructions are included only when scripts are required. Basic Checklist retains its existing SQL workflow. Expiry is one day before the earliest upcoming batch in section 4. Today uses Australia/Perth time. Review approval wording and ensure the SQL and bulk mod form are attached before sending.</p>
+    <p class="text-body-secondary">Modify Recall Setup requires a reviewed coverage/script decision in 8a. SQL and bulk modification instructions are included only when scripts are required. Basic Checklist includes the current-setup assessment from 4a and retains its existing SQL workflow for corrective work; a clear preview does not approve or cancel that work. Expiry is one day before the earliest upcoming batch in section 4. Today uses Australia/Perth time. Review approval wording and ensure the SQL and bulk mod form are attached before sending.</p>
     <div class="d-flex flex-wrap gap-2 mb-3">
       <button type="button" id="generate-agent" class="btn btn-success">Generate agent instructions</button>
       <button type="button" id="copy-agent" class="btn btn-outline-secondary" disabled>Copy formatted instructions</button>
@@ -421,6 +439,8 @@
 <script src="{{ url_for('static', filename='js/checklist.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/coverage-engine.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/coverage.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/current-coverage-engine.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/current-coverage.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/output.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/agent-output.js') }}" defer></script>
 {% endblock %}
