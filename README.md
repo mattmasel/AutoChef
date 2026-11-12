@@ -338,3 +338,64 @@ cards; its navbar link is retained.
 
 Verified issue/task lifecycle, restart persistence, separate issues for one
 CRN, stale saves, CSRF, unsafe links, escaped notes and cascade deletion.
+
+## Modify Recall Setup: coverage assessment (section 8a)
+
+Basic Checklist retains its existing behaviour. Modify Recall Setup now has a
+separate finite-window coverage comparison. Sections 3a and 9 still calculate
+adjoining ranges for script reassignment; these are NOT used as batch coverage.
+
+1. Enter current and requested types in their reminder sequence.
+2. In 8a, enter the changeover time and the assessment end, in practice local time.
+   New automation is effective at the changeover instant. Current types refer
+   to patient state after all batches created BEFORE that instant.
+3. Enter the inclusive recall-date scope to assess for patients currently on
+   EACH type. This may be the actual date span found in a read-only patient
+   check, or a broader conservative span. These are not patient records.
+4. Add the OLD upcoming preview as the unchanged baseline, and the NEW upcoming
+   preview: type, creation/send date and time, Recall From and Recall To. Include
+   all runs within the same window (both boundaries inclusive). Do not include
+   old batches that have already been created. Multiple rows per type are allowed;
+   no rows for a type means no run for it within that window. Remove unused rows.
+5. Confirm preview completeness and that stages correspond in the same order.
+6. Check coverage, review any flagged ranges against actual patients, then select
+   a script decision and record the evidence. Any coverage/schedule/range change
+   resets the decision. Entries are page-only, like the existing checklist.
+
+The engine partitions recall-date scopes at batch boundaries and follows each
+hypothetical cohort chronologically from its starting type. Creating a batch
+advances the patient one type without changing the recall date. Final type does
+not advance; repeated final capture is flagged for review. No intervening
+invoice/treatment is simulated. The compared outcome is reminders reached by
+the assessment END, not the exact original send date. A later new batch inside
+the window can resolve an earlier apparent gap. A delay beyond the window is
+flagged as potentially missed OR delayed, not as a proven permanent omission.
+
+A clear result means no ADDITIONAL loss versus the old preview within these
+scopes and this window. It does not prove that either schedule covers all dates,
+that existing shared gaps are absent, that no duplicates occur at other stages,
+or that future patients, treatment resets, exclusions and later runs are safe.
+Already-sent final reminders cannot be inferred from type/date alone. Review
+patient history where relevant. Date comparison never proves patient counts.
+
+Missing/invalid input, no meaningful old baseline, changed stage counts/order,
+or ambiguous same-time overlapping batches require manual review. The first
+version automatically compares unchanged stage sequences only. Added/removed/
+reordered stages can be documented using Manual review — scripts required, but
+cannot receive an automatic no-script approval. Same-time batches with disjoint
+coverage do not require an ordering assumption.
+
+Ticket notes include assessment status, window, scopes, potential ranges and
+review evidence. Calculated existing/requested reassignment ranges appear when
+there is an unresolved potential gap or a reviewer says scripts are required;
+they are omitted after a valid no-script decision. Potential ranges are not an
+automatically approved SQL scope. Agent booking instructions require a valid
+review decision and notes. Script-required jobs keep the SQL expiry, bulk-mod
+wording and execution order. No-script jobs omit these and include schedule
+change/verification steps. Incomplete assessments cannot approve a no-script job.
+
+No SQL is generated or executed. No new runtime dependencies. Verification
+covered progression, later pickup, date boundaries, final-stage behaviour,
+ambiguous ordering, invalid inputs, decision invalidation, conditional ticket
+notes/agent instructions and unchanged Basic workflow. Visual browser testing
+was not performed for this update.
