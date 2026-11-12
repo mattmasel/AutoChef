@@ -238,6 +238,39 @@
       <div id="requested-types" class="d-grid gap-3"></div>
     </fieldset>
   </details>
+  <details id="coverage-section" class="card rounded-4 mb-4" open hidden>
+    <summary class="p-4 fw-semibold">8a. Schedule change coverage check</summary>
+    <fieldset id="coverage-fields" class="card-body px-4 pt-0" disabled>
+      <p>Compare the old upcoming preview (what would happen if unchanged) with the new upcoming preview. Copy the actual Run date, Date From and Date To from D4W. These are separate from the calculated script reassignment ranges in 3a and 9.</p>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6"><label class="form-label" for="coverage-start">Changeover date and time</label><input class="form-control" type="datetime-local" id="coverage-start"></div>
+        <div class="col-md-6"><label class="form-label" for="coverage-end">Assess through date and time</label><input class="form-control" type="datetime-local" id="coverage-end"></div>
+      </div>
+      <p class="form-text">Use the practice's local time throughout. At the changeover instant the new schedule takes effect. Start with patients' types after all earlier batches have been created. Include every old and new upcoming run from changeover through the end time; do not enter already-sent batches.</p>
+      <h3 class="h6">Recall dates to assess, by current type</h3>
+      <p class="small text-body-secondary">Enter the inclusive date span of patients remaining on each type at changeover, or a broader span to check conservatively. No patient records are read. Blank scopes mean an incomplete assessment. These fields do not change script ranges.</p>
+      <div id="coverage-scopes" class="d-grid gap-3 mb-4"></div>
+      <h3 class="h6">Upcoming batch coverage</h3>
+      <p class="small text-body-secondary">Add multiple rows per type as needed. Select the old or new preview for each row. Rows are evaluated chronologically, regardless of entry order. For a type with no runs in this window, add no rows for that type.</p>
+      <div id="coverage-batches" class="d-grid gap-3 mb-3"></div>
+      <button id="coverage-add" type="button" class="btn btn-outline-secondary mb-3">Add batch</button>
+      <label class="form-check mb-3"><input id="coverage-confirm" type="checkbox" class="form-check-input"> I have included all runs in this window, and current/requested stages correspond in the same order (including the final stage).</label>
+      <p class="small text-body-secondary">Added, removed or reordered stages need manual review. Date comparison cannot establish actual patient counts, exclusions, treatment resets or coverage beyond the assessment window. Same-time overlapping batches may require manual review.</p>
+      <button id="coverage-check" type="button" class="btn btn-success mb-3">Check coverage</button>
+      <div id="coverage-result" class="border rounded-3 p-3 mb-4" role="status" aria-live="polite">Not assessed yet.</div>
+      <label for="coverage-decision" class="form-label">Patient check / script decision</label>
+      <select id="coverage-decision" class="form-select mb-3">
+        <option value="pending">Pending — review required</option>
+        <option value="required">Affected patients confirmed — scripts required</option>
+        <option value="none">Checked flagged ranges — no affected patients, no scripts required</option>
+        <option value="clear">Reviewed clear assessment — no scripts required within assessed scope</option>
+        <option value="manual">Manual review — scripts required</option>
+      </select>
+      <label for="coverage-evidence" class="form-label">Review evidence / decision notes</label>
+      <textarea id="coverage-evidence" class="form-control" rows="3" placeholder="Record the patient count/check, review scope and reason for your script decision. Do not enter patient identifiers."></textarea>
+      <p class="form-text">A decision and review notes are required before generating booking instructions. Changes to coverage inputs, schedules or script ranges reset the decision to Pending. This page does not generate or run SQL.</p>
+    </fieldset>
+  </details>
   <details class="card rounded-4 mb-4" open>
     <summary id="range-heading" class="p-4 fw-semibold">9. Recall date ranges</summary>
     <div class="card-body px-4 pt-0">
@@ -286,7 +319,7 @@
 <section class="card rounded-4 mb-4" aria-labelledby="agent-heading">
   <div class="card-body p-4">
     <h2 id="agent-heading" class="h5">Agent instructions</h2>
-    <p class="text-body-secondary">New Setup is included for Modify Recall Setup only. Expiry is one day before the earliest upcoming batch in section 4. Today uses Australia/Perth time. Review approval wording and ensure the SQL and bulk mod form are attached before sending.</p>
+    <p class="text-body-secondary">Modify Recall Setup requires a reviewed coverage/script decision in 8a. SQL and bulk modification instructions are included only when scripts are required. Basic Checklist retains its existing SQL workflow. Expiry is one day before the earliest upcoming batch in section 4. Today uses Australia/Perth time. Review approval wording and ensure the SQL and bulk mod form are attached before sending.</p>
     <div class="d-flex flex-wrap gap-2 mb-3">
       <button type="button" id="generate-agent" class="btn btn-success">Generate agent instructions</button>
       <button type="button" id="copy-agent" class="btn btn-outline-secondary" disabled>Copy formatted instructions</button>
@@ -386,6 +419,8 @@
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/recall-schedule.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/checklist.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/coverage-engine.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/coverage.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/output.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/agent-output.js') }}" defer></script>
 {% endblock %}

@@ -29,8 +29,13 @@
     }
     const modify = document.getElementById("job-type").value === "modify";
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
-    const fields = [...form.querySelectorAll("input, select")].filter(field =>
-      !field.matches(":disabled") && /^(recall_count|requested_recall_count|recalls\[|requested_recalls\[|requested_ranges\[|batches\[.*\[date\])/.test(field.name));
+    const coverage = modify ? window.AutoChefCoverage.evaluate() : null;
+    const scripts = !modify || coverage.scripts === true;
+    const fields = [...form.querySelectorAll("input, select")].filter(field => {
+      if (field.matches(":disabled")) return false;
+      if (/^(requested_ranges\[|batches\[.*\[date\])/.test(field.name)) return scripts;
+      return /^(recall_count|requested_recall_count|recalls\[|requested_recalls\[)/.test(field.name);
+    });
     function fail(message, field) {
       status.textContent = message;
       if (field) {
@@ -38,6 +43,10 @@
         while (parent) { if (parent.tagName === "DETAILS") parent.open = true; parent = parent.parentElement; }
         field.focus(); field.reportValidity();
       }
+    }
+    if (modify && coverage.scripts === null) {
+      fail("Complete the coverage assessment and a valid script decision with review evidence in section 8a before generating booking instructions.");
+      return;
     }
     for (const field of fields) {
       if (field.matches("[data-date]")) field.dispatchEvent(new Event("input", { bubbles: true }));
@@ -62,9 +71,12 @@
     }
     const todayText = new Intl.DateTimeFormat("en-GB", {timeZone: "Australia/Perth", day: "2-digit", month: "2-digit", year: "numeric"}).format(new Date());
     const today = parseDate(todayText);
-    const expiry = new Date(Math.min(...Array.from({length: total}, (_, i) => parseDate(value(`batches[${i}][date]`)).getTime())));
-    expiry.setUTCDate(expiry.getUTCDate() - 1);
-    if (expiry < today) { fail("The earliest batch leaves no valid SQL window from today. Update upcoming batch dates and obtain updated SQL before generating instructions."); return; }
+    let expiry = null;
+    if (scripts) {
+      expiry = new Date(Math.min(...Array.from({length: total}, (_, i) => parseDate(value(`batches[${i}][date]`)).getTime())));
+      expiry.setUTCDate(expiry.getUTCDate() - 1);
+      if (expiry < today) { fail("The earliest batch leaves no valid SQL window from today. Update upcoming batch dates and obtain updated SQL before generating instructions."); return; }
+    }
     const fragment = document.createDocumentFragment();
     const text = [];
     function line(tag, content, italic = false) {
@@ -93,13 +105,20 @@
       }
     }
     line("h1", "Agent Instructions");
-    line("p", "Below checklist approved and SQL supplied.");
+    line("p", scripts ? "Below checklist approved and SQL supplied." : "Below checklist approved for schedule changes without SQL within the reviewed scope.");
     line("h3", "Current Setup");
     setup("recalls", total);
     if (modify) { line("h3", "New Setup"); setup("requested_recalls", targetTotal); }
+    if (modify) {
+      line("h3", "Schedule change coverage assessment");
+      coverage.details.forEach(detail => line("p", detail));
+    }
+    if (scripts) {
     line("h4", "Script Expiry Warning");
     line("p", `The attached SQL is only usable between ${todayText} and ${formatDate(expiry)}. If running outside those dates, please contact the automation team for an updated SQL.`);
+    }
     line("h3", "Prior to Booking");
+    if (scripts) {
     line("p", "Have customer sign attached bulk mod form requesting the following:");
     const names = [];
     for (let i = 0; i < targetTotal; i++) {
@@ -110,12 +129,19 @@
     const typeList = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} or ${names.at(-1)}`;
     line("p", `Adjust patient's recall type and dates to be ${names.length > 1 ? "either " : ""}${typeList} depending on last treatment date.`, true);
     line("p", "Book a time with customer to run SQL and make changes to schedule");
+    } else {
+      line("p", "Confirm the reviewed schedule changes and book a time with the customer. No SQL or recall reassignment is included in this booking.");
+    }
     line("h3", "During Booking");
     // Keep job-specific booking steps in one place for future job requirements.
-    const bookingSteps = [
+    const bookingSteps = scripts ? [
       "Backup the database",
       'Make changes to automation (if required - see "New Setup")',
       "Run attached SQL (run 35005 first then 31628 second)"
+    ] : [
+      "Backup the database",
+      'Make the agreed automation changes (see "New Setup")',
+      "Verify upcoming batch coverage and confirm the reviewed patients remain eligible under the new schedule"
     ];
     const list = document.createElement("ol");
     list.style.cssText = "margin:0 0 16px;padding-left:24px;";
@@ -128,7 +154,7 @@
     plainText = text.join("\n").trim();
     generated = true; stale = false; generatedDay = perthDay();
     richButton.disabled = plainButton.disabled = false;
-    status.textContent = "Instructions generated. Review the approval wording, attachments and dates before copying.";
+    status.textContent = scripts ? "Instructions generated. Review the approval wording, attachments and dates before copying." : "Instructions generated without SQL steps. Review the coverage scope and agreed schedule changes before copying.";
   }
 
   function selectPreview() {

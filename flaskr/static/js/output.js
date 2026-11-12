@@ -21,12 +21,15 @@
 
   function generate() {
     // Commit pending count edits before reading dynamically created rows.
-    for (const id of ["recall-count", "period-count"]) {
+    for (const id of ["recall-count", "period-count", "requested-count"]) {
       document.getElementById(id).dispatchEvent(new Event("change", { bubbles: true }));
     }
-    // Only validate fields included in the testing output, not requested changes.
+    const modify = document.getElementById("job-type").value === "modify";
+    const coverage = modify ? window.AutoChefCoverage.evaluate() : null;
+    // Only validate script ranges when they are included in this output.
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const relevant = [...form.querySelectorAll("input, select")].filter((field) => {
+      if (/^(existing_ranges|requested_ranges)\[/.test(field.name)) return !field.matches(":disabled") && Boolean(coverage?.includeRanges);
       return !field.matches(":disabled") && /^(recall_count|period_count|recalls\[|existing_ranges\[|batches\[|periods\[|Px\d|PostPx\d)/.test(field.name);
     });
     for (const field of relevant) {
@@ -68,7 +71,7 @@
       text.push(`- ${step}`);
     }
     fragment.append(list); text.push("");
-    line("h2", "Pre-SQL Testing");
+    line("h2", modify && coverage.scripts !== true ? "Before Changes — Testing" : "Pre-SQL Testing");
     line("h3", "Automation Set");
     line("p", value("recall_set_name"));
     line("h3", "Test Patients");
@@ -96,13 +99,23 @@
       line("p", `${value(`${prefix}[name]`)} - ${schedule} - ${period}`);
     }
     if (!total) line("p", "None recorded");
-    if (document.getElementById("job-type").value === "modify") {
-      line("h3", "Existing recall date ranges");
-      for (let i = 0; i < total; i++) {
-        const prefix = `existing_ranges[${i}]`;
-        line("p", `${value(`${prefix}[name]`)} - ${value(`${prefix}[from]`)} to ${value(`${prefix}[to]`)}`);
+    if (modify) {
+      line("h3", "Schedule change coverage assessment");
+      coverage.details.forEach(detail => line("p", detail));
+      if (coverage.includeRanges) {
+        line("p", "Script reassignment ranges for review — these are not batch coverage or an automatically approved SQL scope.");
+        for (const [title, collection, count] of [
+          ["Existing recall date ranges", "existing_ranges", total],
+          ["Requested recall date ranges", "requested_ranges", Number(document.getElementById("requested-count").value)]
+        ]) {
+          line("h3", title);
+          for (let i = 0; i < count; i++) {
+            const prefix = `${collection}[${i}]`;
+            line("p", `${value(`${prefix}[name]`)} - ${value(`${prefix}[from]`)} to ${value(`${prefix}[to]`)}`);
+          }
+          if (!count) line("p", "None recorded");
+        }
       }
-      if (!total) line("p", "None recorded");
     }
     line("h3", "Number of Patients for Each Recall Period");
     for (let i = 0; i < periods; i++) {
@@ -111,7 +124,7 @@
     if (!periods) line("p", "None recorded");
     line("h3", "Number of Patients on Manual Recalls");
     line("p", value("manual_patients"));
-    line("h2", "Post-SQL Testing");
+    line("h2", modify && coverage.scripts !== true ? "After Changes — Testing" : "Post-SQL Testing");
     line("h3", "Test Patients");
     for (let i = 1; i <= 3; i++) {
       // Read shared identity directly from pre-SQL fields so it cannot diverge.
