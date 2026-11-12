@@ -182,7 +182,7 @@
   <details class="card rounded-4 mb-4" open>
     <summary class="p-4 fw-semibold">4. Upcoming recall batches</summary>
     <div class="card-body px-4 pt-0">
-      <p class="text-body-secondary">One batch per current recall type. Type names update automatically from section 3.</p>
+      <p class="text-body-secondary">Enter the next batch date and its actual D4W Recall From/To range for each type. Type names follow section 3. Later batches are calculated from the schedule. Batch times use practice local time; 09:00 is a placeholder — use actual times if stage order matters.</p>
       <p id="batch-empty" class="small text-body-secondary" hidden>Add a recall type in section 3 to enter its upcoming batch.</p>
       <div id="recall-batches" class="d-grid gap-3"></div>
     </div>
@@ -191,19 +191,11 @@
   <details id="current-coverage-section" class="card rounded-4 mb-4" open>
     <summary class="p-4 fw-semibold">4a. Check current setup for gaps</summary>
     <fieldset id="current-coverage-fields" class="card-body px-4 pt-0">
-      <p class="text-body-secondary">Check the existing schedule without proposing a change. Copy the actual From/To dates from several upcoming runs for every current type (for example, the next six). A fortnightly run that covers only one week leaves an uncovered week between runs.</p>
-      <p class="form-text">Use at least two runs per type and include all runs inside the window. These are batch coverage ranges, not the reassignment ranges in section 9. Patient counts are not needed. Dates and times use the practice's local time.</p>
-      <div class="row g-3 mb-3">
-        <div class="col-md"><label class="form-label" for="current-coverage-start">Assessment start</label><input id="current-coverage-start" type="datetime-local" class="form-control"></div>
-        <div class="col-md"><label class="form-label" for="current-coverage-end">Assessment end</label><input id="current-coverage-end" type="datetime-local" class="form-control"></div>
-      </div>
-      <div id="current-coverage-batches" class="d-grid gap-3 mb-3"></div>
-      <button id="current-coverage-add" type="button" class="btn btn-outline-secondary mb-3">Add current batch</button>
-      <label class="form-check mb-3"><input id="current-coverage-confirm" type="checkbox" class="form-check-input"> I have included all current-setup runs within this window, with reminder types in progression order and the final reminder last.</label>
+      <p class="text-body-secondary">Uses the schedules and conditions in section 3 plus one next batch per type from section 4. AutoChef checks the entered From/To against the rule, generates later batches, and chooses the checking period automatically.</p>
       <button id="current-coverage-check" type="button" class="btn btn-success mb-3">Check current setup</button>
       <div id="current-coverage-result" class="border rounded-3 p-3 mb-3" role="status" aria-live="polite">Not assessed yet.</div>
-      <p class="form-text">Any potential gap requires corrective scripts, even if no patients occupy the range. An ongoing schedule gap also needs correction. Results appear in ticket notes and agent instructions; this check does not generate or run SQL.</p>
-      <p class="form-text">After the final reminder, patients stay on that type and are finished. Older dates outside its preview are not flagged. A gap inside the final-type preview concerns patients still awaiting that reminder. Historical gaps and dates outside the preview cannot be established from these runs alone.</p>
+      <details><summary>Calculated upcoming batches — first six per type</summary><div id="current-generated-preview" class="table-responsive mt-3"></div></details>
+      <p class="form-text">Any detected potential gap requires scripts regardless of patient counts. Completed final reminders are not re-enrolled. A clear result applies only to the generated period; historical stranded patients outside it are not established. Review the calculated preview against D4W before using the result.</p>
     </fieldset>
   </details>
 
@@ -259,31 +251,22 @@
     <summary class="p-4 fw-semibold">8a. Schedule change coverage check</summary>
     <fieldset id="coverage-fields" class="card-body px-4 pt-0" disabled>
       <p>Compare the old upcoming preview (what would happen if unchanged) with the new upcoming preview. Copy the actual Run date, Date From and Date To from D4W. These are separate from the calculated script reassignment ranges in 3a and 9.</p>
-      <div class="row g-3 mb-3">
-        <div class="col-md-6"><label class="form-label" for="coverage-start">Changeover date and time</label><input class="form-control" type="datetime-local" id="coverage-start"></div>
-        <div class="col-md-6"><label class="form-label" for="coverage-end">Assess through date and time</label><input class="form-control" type="datetime-local" id="coverage-end"></div>
-      </div>
-      <p class="form-text">Use the practice's local time throughout. At the changeover instant the new schedule takes effect. Start with patients' types after all earlier batches have been created. Include every old and new upcoming run from changeover through the end time; do not enter already-sent batches.</p>
-      <h3 class="h6">Recall dates to assess, by current type</h3>
-      <p class="small text-body-secondary">Enter the inclusive date span of patients remaining on each type at changeover, or a broader span to check conservatively. No patient records are read. Blank scopes mean an incomplete assessment. These fields do not change script ranges.</p>
-      <div id="coverage-scopes" class="d-grid gap-3 mb-4"></div>
-      <h3 class="h6">Upcoming batch coverage</h3>
-      <p class="small text-body-secondary">Add multiple rows per type as needed. Select the old or new preview for each row. Rows are evaluated chronologically, regardless of entry order. For a type with no runs in this window, add no rows for that type.</p>
-      <div id="coverage-batches" class="d-grid gap-3 mb-3"></div>
-      <button id="coverage-add" type="button" class="btn btn-outline-secondary mb-3">Add batch</button>
-      <label class="form-check mb-3"><input id="coverage-confirm" type="checkbox" class="form-check-input"> I have included all runs in this window, and current/requested stages correspond in the same order (including the final stage).</label>
-      <p class="small text-body-secondary">Added, removed or reordered stages need manual review. Date comparison cannot establish actual patient counts, exclusions, treatment resets or coverage beyond the assessment window. Same-time overlapping batches may require manual review.</p>
+      <p class="text-body-secondary">Current next batches come from section 4. Enter only the proposed next batch for each requested type below. Later runs, starting recall-date scopes and the common checking period are calculated automatically.</p>
+      <div id="auto-requested-batches" class="d-grid gap-3 mb-3"></div>
+      <label class="form-check mb-3"><input id="coverage-confirm" type="checkbox" class="form-check-input"> Current and requested types correspond in the same order, with the final reminder last. The proposed setup takes effect before all entered next batches.</label>
+      <p class="form-text">Added, removed or reordered types require manual review. If the change happens after an entered batch, update the next-batch information to reflect the intended changeover. Use practice-local times; simultaneous overlapping stages require verified processing times.</p>
+      <details class="mb-3"><summary>Calculated upcoming batches — first six per type</summary><div id="modify-generated-preview" class="table-responsive mt-3"></div></details>
       <button id="coverage-check" type="button" class="btn btn-success mb-3">Check coverage</button>
       <div id="coverage-result" class="border rounded-3 p-3 mb-4" role="status" aria-live="polite">Not assessed yet.</div>
       <p class="form-text">Any detected potential gap automatically requires corrective scripts, even if no patients actually occupy that range. No patient search or count is required, and this requirement cannot be overridden below. An incomplete assessment still needs review.</p>
       <label for="coverage-decision" class="form-label">Review decision when no gap is detected</label>
-      <select id="coverage-decision" class="form-select mb-3">
+      <select id="coverage-decision" name="coverage_decision" class="form-select mb-3">
         <option value="pending">Pending — review required</option>
         <option value="clear">Reviewed clear assessment — no scripts required within assessed scope</option>
         <option value="manual">Manual review — scripts required</option>
       </select>
       <label for="coverage-evidence" class="form-label">Review evidence / decision notes</label>
-      <textarea id="coverage-evidence" class="form-control" rows="3" placeholder="Record the review scope and reason for any manual decision. Patient counts are not required. Do not enter patient identifiers."></textarea>
+      <textarea id="coverage-evidence" name="coverage_evidence" class="form-control" rows="3" placeholder="Record the review scope and reason for any manual decision. Patient counts are not required. Do not enter patient identifiers."></textarea>
       <p class="form-text">A detected gap requires scripts automatically and retains the corrective date ranges in the output. Otherwise, a decision and review notes are required before generating booking instructions. Changes to coverage inputs, schedules or script ranges reset manual decisions to Pending and recalculate the requirement. This page does not generate or run SQL.</p>
     </fieldset>
   </details>
@@ -400,6 +383,9 @@
         <label class="form-label" for="batch-__INDEX__-type">Recall type name</label>
         <input class="form-control" type="text" id="batch-__INDEX__-type" name="batches[__INDEX__][type]" placeholder="Enter type name in section 3" readonly>
       </div>
+      <div class="col-md-4"><label class="form-label" for="batch-__INDEX__-time">Batch time</label><input class="form-control" type="time" value="09:00" id="batch-__INDEX__-time" name="batches[__INDEX__][time]"></div>
+      <div class="col-md-4"><label class="form-label" for="batch-__INDEX__-from">Recall Date From</label><input class="form-control" type="date" id="batch-__INDEX__-from" name="batches[__INDEX__][from]"></div>
+      <div class="col-md-4"><label class="form-label" for="batch-__INDEX__-to">Recall Date To</label><input class="form-control" type="date" id="batch-__INDEX__-to" name="batches[__INDEX__][to]"></div>
       <div class="col-md-4">
         <label class="form-label" for="batch-__INDEX__-patients">Number of patients</label>
         <input class="form-control" type="number" min="0" step="1" id="batch-__INDEX__-patients" name="batches[__INDEX__][patients]">
@@ -436,8 +422,11 @@
 <script src="{{ url_for('static', filename='js/recall-schedule.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/checklist.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/coverage-engine.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/coverage.js') }}" defer></script>
+
 <script src="{{ url_for('static', filename='js/current-coverage-engine.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/preview-engine.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/auto-preview.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/coverage.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/current-coverage.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/output.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/agent-output.js') }}" defer></script>

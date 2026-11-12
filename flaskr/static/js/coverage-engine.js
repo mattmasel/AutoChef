@@ -21,7 +21,7 @@
     if (!input.confirmed) return incomplete('Confirm that all batches within the assessment window are supplied, and the current and requested types correspond in the same order.');
     const count = input.types.length;
     if (!count || count !== input.requestedCount) return incomplete('Automatic comparison requires the same number and order of reminder stages. Added, removed or reordered stages require manual review and a documented script decision.');
-    if (count > 50 || input.batches.length > 1000) return incomplete('This assessment is too large. Use at most 50 types and 1,000 batch rows.');
+    if (count > 50 || input.batches.length > 4000) return incomplete('This assessment is too large. Use at most 50 types and 4,000 batch rows.');
     const scopes = input.types.map(t => ({...t, from:day(t.from), to:day(t.to)}));
     if (scopes.some(t => !t.name.trim() || !Number.isFinite(t.from) || !Number.isFinite(t.to) || t.from > t.to)) return incomplete('Enter a type name and valid inclusive recall-date scope for every current type. These scopes describe patients remaining on each type at changeover.');
     const batches = [];

@@ -341,128 +341,99 @@ cards; its navbar link is retained.
 Verified issue/task lifecycle, restart persistence, separate issues for one
 CRN, stale saves, CSRF, unsafe links, escaped notes and cascade deletion.
 
-## Modify Recall Setup: coverage assessment (section 8a)
+## Automatic recall coverage checks (Basic 4a and Modify 8a)
 
-Basic Checklist retains its existing behaviour. Modify Recall Setup now has a
-separate finite-window coverage comparison. Sections 3a and 9 still calculate
-adjoining ranges for script reassignment; these are NOT used as batch coverage.
+Enter schedules and recall conditions as usual. Section 4 now needs just ONE
+next batch per current type: send date, Recall From, Recall To, and the batch
+time (practice local time, default 09:00). For Modify, enter ONE proposed next
+batch per requested type in 8a as well. No assessment start/end dates, manual
+starting scopes or repeated preview rows are required.
 
-1. Enter current and requested types in their reminder sequence.
-2. In 8a, enter the changeover time and the assessment end, in practice local time.
-   New automation is effective at the changeover instant. Current types refer
-   to patient state after all batches created BEFORE that instant.
-3. Enter the inclusive recall-date scope to assess for patients currently on
-   EACH type. This may be the actual date span found in a read-only patient
-   check, or a broader conservative span. These are not patient records.
-4. Add the OLD upcoming preview as the unchanged baseline, and the NEW upcoming
-   preview: type, creation/send date and time, Recall From and Recall To. Include
-   all runs within the same window (both boundaries inclusive). Do not include
-   old batches that have already been created. Multiple rows per type are allowed;
-   no rows for a type means no run for it within that window. Remove unused rows.
-5. Confirm preview completeness and that stages correspond in the same order.
-6. Check coverage. Any potential gap automatically requires corrective scripts,
-   even if no actual patients occupy the flagged ranges. No patient search or
-   count is required, and a manual decision cannot override this requirement.
-   When no gap is detected, record the review decision and notes; an incomplete
-   assessment cannot approve a no-script change. Any coverage/schedule/range
-   change resets manual decisions. Entries are page-only, like the existing checklist.
+The entered next batch is a cross-check, not a pattern to blindly repeat.
+AutoChef calculates its range from the condition and refuses automatic results
+if it does not exactly match the entered D4W From/To. It then generates later
+runs using the selected daily/weekly interval or monthly dates/patterns. Weekly
+intervals are anchored to the week containing the supplied next run. Missing
+monthly day numbers are skipped; Last means the actual final day. Multiple
+weekdays/monthdays and monthly ordinal weekdays are supported. A one-time
+schedule has only its supplied run and cannot establish recurring continuity.
 
-The engine partitions recall-date scopes at batch boundaries and follows each
-hypothetical cohort chronologically from its starting type. Creating a batch
-advances the patient one type without changing the recall date. Final type does
-not advance; repeated final capture is flagged for review. No intervening
-invoice/treatment is simulated. The compared outcome is reminders reached by
-the assessment END, not the exact original send date. A later new batch inside
-the window can resolve an earlier apparent gap. A delay beyond the window is
-flagged as potentially missed OR delayed, not as a proven permanent omission.
+Confirmed calendar rules:
 
-A clear result means no ADDITIONAL loss versus the old preview within these
-scopes and this window. It does not prove that either schedule covers all dates,
-that existing shared gaps are absent, that no duplicates occur at other stages,
-or that future patients, treatment resets, exclusions and later runs are safe.
-Already-sent final reminders cannot be inferred from type/date alone. Review
-patient history where relevant. Date comparison never proves patient counts.
+- Next Week and Advanced IS 1 week in the future cover the whole next
+  Monday–Sunday week. IS 1 week in the past covers the previous calendar week.
+- Month selections cover whole calendar months; IS 1 month in the past is
+  the whole previous month. Month 3 Months ago is the complete month three
+  calendar months earlier. Month lengths and leap years are preserved.
+- Simple Today/Tomorrow, Next/This/Last Month, Next Quarter (calendar quarter),
+  and the 3/6/12-month selections are calculated from calendar boundaries.
+- Advanced IS days selects the exact offset date. Bounded AND conditions with
+  more/less-than days use strict day boundaries on the selected past/future
+  side. More/less-than weeks use seven-day offsets from the send date.
+  More/less-than months shift by calendar months from the send date, preserving
+  the day number or clamping to the last day of the target month. For the
+  verified >1 AND <3 patterns, past endpoints are offset(-3)-1 day through
+  offset(-1)-1 day; future endpoints are offset(+1) through offset(+3)-1 day,
+  inclusive. The same comparator boundaries are applied to other amounts.
+  The asymmetry is intentional and matches eight supplied D4W observations.
+  Advanced IS remains a whole-calendar-period selection. Open-ended conditions
+  still require review. Each entered next range must match before forecasting.
 
-Missing/invalid input, no meaningful old baseline, changed stage counts/order,
-or ambiguous same-time overlapping batches require manual review. The first
-version automatically compares unchanged stage sequences only. Added/removed/
-reordered stages can be documented using Manual review — scripts required, but
-cannot receive an automatic no-script approval. Same-time batches with disjoint
-coverage do not require an ordering assumption.
+The checking horizon is automatic: one year of starting cohorts from the latest
+next batch, plus a tail calculated from offsets and recurrence spacing. It is
+limited to six years and 2,000 generated batches per setup. Cases beyond these
+limits return incomplete/manual review, never an all-clear. The first six
+calculated runs per type are visible under Calculated upcoming batches. Review
+these against D4W before relying on results, especially calendar edge cases.
 
-Ticket notes include assessment status, window, scopes, potential ranges and
-review evidence. Calculated existing/requested reassignment ranges appear when
-there is an unresolved potential gap or a reviewer says scripts are required;
-they are omitted after a valid no-script decision. Potential ranges are not an
-automatically approved SQL scope. Agent booking instructions require a valid
-script decision (automatic for a detected gap, otherwise reviewed with notes).
-Script-required jobs keep the SQL expiry, bulk-mod
-wording and execution order. No-script jobs omit these and include schedule
-change/verification steps. Incomplete assessments cannot approve a no-script job.
+Basic checks for holes between generated ranges and traces hypothetical cohorts
+leaving non-final batches through subsequent types. Advancing occurs at batch
+creation without changing the recall date. Completing the final reminder ends
+the sequence even though the type is retained. Dates before the initial final
+range are not automatically treated as missed. Possible repeat final reminders
+require review. Boundary-limited cohorts are reported separately, not labelled
+as gaps merely because the forecast ends.
 
-No SQL is generated or executed. No new runtime dependencies. Verification
-covered progression, later pickup, date boundaries, final-stage behaviour,
-ambiguous ordering, invalid inputs, decision invalidation, conditional ticket
-notes/agent instructions and unchanged Basic workflow. Visual browser testing
-was not performed for this update.
+Modify uses one shared generated period for both setups. Hypothetical starting
+scopes are derived from the first year of old-schedule coverage for each type;
+no patient records are needed. The proposed setup must take effect before all
+entered next batches, and reminder stages must correspond in the same order.
+If the actual changeover occurs later, update the next-batch information after
+accounting for earlier batches. Added/removed/reordered stages need manual
+review. Simultaneous overlapping same/adjacent stages have unknown processing
+order: enter verified creation times or review manually.
 
-## Basic Checklist: current-setup coverage (section 4a)
+Any detected potential gap forces scripts required, regardless of patient
+counts and despite any manual no-script selection. Corrective reassignment
+ranges remain in Modify output whenever scripts are required. A clear Modify
+result still requires review notes and a no-script decision. Input changes reset
+that decision. Basic retains its existing SQL booking workflow for corrective
+work; its gap result does not cancel separately required SQL. An ongoing
+schedule gap also needs schedule correction. No SQL is generated or run.
 
-Use this when the customer is keeping their existing schedule. Enter the
-assessment start/end (practice local time) and copy all upcoming runs inside it,
-including each type, creation/send time, and inclusive Recall Date From/To.
-Use at least two runs per type; six upcoming runs is a useful starting point.
-These are actual preview ranges, not the reassignment ranges in section 9.
-No patient records, searches or counts are required.
+Results are explicitly bounded and do not establish historical coverage,
+existing stranded patients outside the derived scopes, treatment resets,
+patient eligibility/counts or perpetual coverage. A matching next range is a
+cross-check, not proof of every D4W edge case. Form entries remain page-only.
 
-The checker merges the supplied ranges for each type and finds holes between
-them. For example, fortnightly runs covering 1–7 October and 15–21 October flag
-8–14 October. Adjacent inclusive ranges have no hole; a supplied catch-up run
-can fill one. It also simulates hypothetical cohorts leaving each non-final
-batch, advancing immediately through later runs with an unchanged recall date.
-An earlier downstream batch cannot pick up a cohort that has not arrived yet.
-If later runs move past a cohort without picking it up, this is a potential
-progression gap. Finite-preview boundary cases are reported separately, not
-mislabelled as gaps.
-
-Any detected gap means scripts are required regardless of actual patient
-counts, even if another type needs more preview rows. The result has no manual
-no-script override. A recurring schedule gap also needs schedule correction;
-a one-off reassignment cannot prevent future gaps. Flagged ranges are evidence
-for review, not an automatically approved SQL reassignment scope.
-
-The final type is special: sending its reminder completes the simulation even
-though the patient stays on that type. Dates before its earliest supplied range
-are not flagged. Internal holes in its preview apply only to hypothetical
-patients still awaiting that reminder. This does not identify whether a real
-final-type patient has already been sent their reminder. Do not re-enrol
-completed patients based on this check.
-
-A clear result is limited to the supplied preview. It cannot prove historical
-coverage, detect all existing stranded patients outside the preview, or prove
-future coverage beyond it. More runs may resolve a flagged delay. Missing or
-invalid entries, unconfirmed completeness, unknown same-time ordering, or too
-few runs prevent a clear result. A possible repeated final reminder from a
-simulated cohort also requires review.
-
-Basic ticket notes and agent instructions include the current result (or
-explicitly say not assessed). Changes to the current schedule or coverage
-inputs invalidate confirmation; generated outputs are regenerated before
-copying. Basic's existing SQL booking workflow is retained for corrective
-work: a clear preview does not cancel separately required SQL. Modify Recall
-Setup keeps its separate old/new comparison unchanged. Entries remain page-only.
+Example: Monday Next Week, next batch 16/11/2026 covering 23–29/11/2026;
+monthly day 1, Month 3 Months ago, next batch 01/12/2026 covering
+01–30/09/2026. The generated next first-stage batch covers 30/11–06/12;
+the next monthly batch covers 01–31/10. This setup passes the bounded check.
+Changing the first stage to every two weeks creates uncovered weeks.
 
 Verification:
 
 ```sh
+node tests/preview-engine.cjs
 node tests/current-coverage.cjs
 node tests/current-coverage-ui.cjs
 node tests/coverage-policy.cjs
 ```
 
-The tests cover fortnightly holes, inclusive and leap-day boundaries, catch-up
-runs, chronological stage hand-offs, final completion, preview limits, invalid
-input and the mandatory-script policy. A browser-independent DOM harness also
-covers Basic notes/instructions, stale results, switching job types and row
-removal. Flask template rendering passed. Full visual browser testing could
-not run in the development environment because Chromium launch was blocked.
+Tests cover the example, generated old/new comparisons, recurrence, calendar and
+leap-year boundaries, eight observed D4W week/month comparison ranges, gaps,
+mismatch rejection, mandatory-script decisions,
+output integration, state invalidation and job switching. Flask page rendering
+passes. Full visual browser testing remains outstanding: Chromium could not
+launch in the development environment.

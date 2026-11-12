@@ -8,7 +8,7 @@
     const start=time(input.start),end=time(input.end),count=input.types.length;
     if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return incomplete('Enter an assessment start and a later end time.');
     if(!input.confirmed)return incomplete('Confirm all current-setup runs in this window and the reminder order.');
-    if(!count||count>50||input.batches.length>300)return incomplete('Use 1–50 current types and at most 300 preview rows.');
+    if(!count||count>50||input.batches.length>2000)return incomplete('Use 1–50 current types and at most 2,000 preview rows.');
     if(input.types.some(t=>!t.name.trim()))return incomplete('Name every current recall type.');
     const rows=[];
     for(const b of input.batches) {
@@ -32,6 +32,7 @@
       if(!ranges.length)continue;
       let coveredTo=ranges[0].to;
       for(const b of ranges.slice(1)) {
+        if(type===count-1&&b.from<=coveredTo)repeated.push({type,from:b.from,to:Math.min(b.to,coveredTo)});
         if(b.from>coveredTo+1)gaps.push({kind:'coverage',type,from:coveredTo+1,to:b.from-1});
         coveredTo=Math.max(coveredTo,b.to);
       }
@@ -39,7 +40,7 @@
     // Every non-final batch supplies a hypothetical cohort to the next stage.
     // Trace from that batch's creation time, so a downstream run that happened
     // earlier cannot count as a pickup. Input records/counts are not required.
-    for(const seed of rows.filter(b=>b.type<count-1)) {
+    for(const seed of rows.filter(b=>b.type<count-1&&(!input.cohortEnd||b.run<=time(input.cohortEnd+'T23:59')))) {
       const later=rows.filter(b=>b.run>seed.run);
       const points=new Set([seed.from,seed.to+1]);
       for(const b of later) {
