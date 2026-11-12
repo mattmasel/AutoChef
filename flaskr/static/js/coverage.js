@@ -59,15 +59,16 @@
   function evaluate() {
     sync();const result=engine.assess(input()),decision=$('coverage-decision').value,evidence=$('coverage-evidence').value.trim();
     const fresh=approvedSignature===signature();
-    let scripts=null;
-    if(fresh && evidence) {
-      if(decision==='manual'||(decision==='required'&&result.state==='gap'))scripts=true;
-      if((decision==='none'&&result.state==='gap')||(decision==='clear'&&result.state==='clear'))scripts=false;
+    const hasGap=result.gaps.length>0;
+    let scripts=hasGap?true:null;
+    if(!hasGap && fresh && evidence) {
+      if(decision==='manual')scripts=true;
+      if(decision==='clear'&&result.state==='clear')scripts=false;
     }
     const details=[result.title,...result.messages];
     result.gaps.forEach(g=>details.push(`Starting on ${$(`recall-${g.initial}-name`).value}: recall dates ${engine.date(g.from)} to ${engine.date(g.to)} may miss or receive fewer reminders by the assessment end; new progression stops at ${$(`requested-${g.stalled}-name`).value || `type ${g.stalled+1}`}.`));
-    details.push(scripts===true?'Reviewer decision: scripts required.':scripts===false?'Reviewer decision: no scripts required within the reviewed scope.':'Script decision pending — do not treat this as approval to change the schedule.');
-    if(scripts!==null)details.push(`Review evidence: ${evidence}`);
+    details.push(hasGap?'Scripts required automatically: a potential coverage gap was detected. Run the corrective scripts regardless of whether any patients occupy the flagged ranges.':scripts===true?'Reviewer decision: scripts required.':scripts===false?'Reviewer decision: no scripts required within the reviewed scope.':'Script decision pending — do not treat this as approval to change the schedule.');
+    if(scripts!==null && evidence)details.push(`Review evidence: ${evidence}`);
     return {...result,scripts,includeRanges:scripts===true||(result.state==='gap'&&scripts===null),details};
   }
   function render() {const r=evaluate();$('coverage-result').replaceChildren(...r.details.map(t=>element('p','mb-2',t)));return r;}

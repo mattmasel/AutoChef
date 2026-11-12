@@ -30,6 +30,7 @@
     const modify = document.getElementById("job-type").value === "modify";
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const coverage = modify ? window.AutoChefCoverage.evaluate() : null;
+    const currentCoverage = !modify ? window.AutoChefCurrentCoverage.evaluate() : null;
     const scripts = !modify || coverage.scripts === true;
     const fields = [...form.querySelectorAll("input, select")].filter(field => {
       if (field.matches(":disabled")) return false;
@@ -112,6 +113,10 @@
     if (modify) {
       line("h3", "Schedule change coverage assessment");
       coverage.details.forEach(detail => line("p", detail));
+    }
+    if (!modify) {
+      line("h3", "Current setup coverage assessment");
+      currentCoverage.details.forEach(detail => line("p", detail));
     }
     if (scripts) {
     line("h4", "Script Expiry Warning");

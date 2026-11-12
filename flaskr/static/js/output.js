@@ -26,6 +26,7 @@
     }
     const modify = document.getElementById("job-type").value === "modify";
     const coverage = modify ? window.AutoChefCoverage.evaluate() : null;
+    const currentCoverage = !modify ? window.AutoChefCurrentCoverage.evaluate() : null;
     // Only validate script ranges when they are included in this output.
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const relevant = [...form.querySelectorAll("input, select")].filter((field) => {
@@ -116,6 +117,10 @@
           if (!count) line("p", "None recorded");
         }
       }
+    }
+    if (!modify) {
+      line("h3", "Current setup coverage assessment");
+      currentCoverage.details.forEach(detail => line("p", detail));
     }
     line("h3", "Number of Patients for Each Recall Period");
     for (let i = 0; i < periods; i++) {
