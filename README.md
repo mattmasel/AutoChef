@@ -66,8 +66,10 @@ set name section and then the current recall types and schedule.
 
 The checklist contains CRN and recall set name text fields, a recall type count,
 and independent schedule and selection controls for each recall type. Weekly
-shows weekdays; Monthly shows dates 1–31. Advanced mode has four dropdowns per
-condition, with an optional second condition joined by “and”. Rows wrap on small
+shows weekdays; Monthly shows dates 1–31. Advanced mode has comparison, unit and
+direction dropdowns plus a typed positive whole-number amount with no upper
+limit, with an optional second condition joined by “and”. This applies to both
+current and requested recall types in both checklists. Rows wrap on small
 screens. Switching modes or temporarily reducing the count preserves inputs in
 the current page, but inactive fields are excluded from FormData.
 

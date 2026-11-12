@@ -8,9 +8,7 @@
     {% for value in ['more than', 'less than', 'is'] %}<option>{{ value }}</option>{% endfor %}
   </select>
   <label class="visually-hidden" for="{{ prefix }}-__INDEX__-{{ row }}-amount">Condition {{ row }} number</label>
-  <select class="form-select w-auto" id="{{ prefix }}-__INDEX__-{{ row }}-amount" name="{{ collection }}[__INDEX__][{{ row }}][amount]">
-    {% for number in range(1, 32) %}<option>{{ number }}</option>{% endfor %}
-  </select>
+  <input class="form-control" style="width: 8rem" type="number" min="1" step="1" value="1" required id="{{ prefix }}-__INDEX__-{{ row }}-amount" name="{{ collection }}[__INDEX__][{{ row }}][amount]" aria-label="Condition {{ row }} number (positive whole number, no upper limit)">
   <label class="visually-hidden" for="{{ prefix }}-__INDEX__-{{ row }}-unit">Condition {{ row }} unit</label>
   <select class="form-select w-auto" id="{{ prefix }}-__INDEX__-{{ row }}-unit" name="{{ collection }}[__INDEX__][{{ row }}][unit]">
     {% for value in ['day(s)', 'week(s)', 'month(s)'] %}<option>{{ value }}</option>{% endfor %}
