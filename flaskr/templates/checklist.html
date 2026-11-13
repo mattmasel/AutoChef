@@ -142,6 +142,7 @@
         <option value="basic">Basic Checklist</option>
         <option value="modify">Modify Recall Setup</option>
       </select>
+      <p id="suggestion-apply-status" class="small mt-3" role="status" aria-live="polite"></p>
     </div>
   </div>
   <details class="card rounded-4 mb-4" open>
@@ -194,6 +195,8 @@
       <p class="text-body-secondary">Uses the schedules and conditions in section 3 plus one next batch per type from section 4. AutoChef checks the entered From/To against the rule, generates later batches, and chooses the checking period automatically.</p>
       <button id="current-coverage-check" type="button" class="btn btn-success mb-3">Check current setup</button>
       <div id="current-coverage-result" class="border rounded-3 p-3 mb-3" role="status" aria-live="polite">Not assessed yet.</div>
+      <button id="current-suggest" type="button" class="btn btn-outline-primary mb-3">Suggest changes — keep schedule</button>
+      <div id="current-suggestions" aria-live="polite"></div>
       <details><summary>Calculated upcoming batches — first six per type</summary><div id="current-generated-preview" class="table-responsive mt-3"></div></details>
       <p class="form-text">Any detected potential gap requires scripts regardless of patient counts. Completed final reminders are not re-enrolled. A clear result applies only to the generated period; historical stranded patients outside it are not established. Review the calculated preview against D4W before using the result.</p>
     </fieldset>
@@ -258,6 +261,8 @@
       <details class="mb-3"><summary>Calculated upcoming batches — first six per type</summary><div id="modify-generated-preview" class="table-responsive mt-3"></div></details>
       <button id="coverage-check" type="button" class="btn btn-success mb-3">Check coverage</button>
       <div id="coverage-result" class="border rounded-3 p-3 mb-4" role="status" aria-live="polite">Not assessed yet.</div>
+      <button id="modify-suggest" type="button" class="btn btn-outline-primary mb-3">Suggest changes — keep schedule</button>
+      <div id="modify-suggestions" aria-live="polite"></div>
       <p class="form-text">Any detected potential gap automatically requires corrective scripts, even if no patients actually occupy that range. No patient search or count is required, and this requirement cannot be overridden below. An incomplete assessment still needs review.</p>
       <label for="coverage-decision" class="form-label">Review decision when no gap is detected</label>
       <select id="coverage-decision" name="coverage_decision" class="form-select mb-3">
@@ -428,6 +433,9 @@
 <script src="{{ url_for('static', filename='js/auto-preview.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/coverage.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/current-coverage.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/suggestion-engine.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/suggestions.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/output.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/agent-output.js') }}" defer></script>
 {% endblock %}
+

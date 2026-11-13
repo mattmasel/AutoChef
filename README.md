@@ -437,3 +437,40 @@ mismatch rejection, mandatory-script decisions,
 output integration, state invalidation and job switching. Flask page rendering
 passes. Full visual browser testing remains outstanding: Chromium could not
 launch in the development environment.
+
+### Suggest conditions while keeping the schedule
+
+Both checklist assessments now include **Suggest changes — keep schedule**.
+Basic searches alternatives for the current setup; Modify searches the proposed
+setup. Up to three alternatives show exact Advanced conditions, original and
+suggested next ranges, and three calculated upcoming batches per changed type.
+All sending schedules, batch times, reminder names and order are preserved.
+
+The initial search proposes bounded more/less-than **week** conditions on the
+same past/future side as the existing range. It targets the longest generated
+interval between runs and tries nearby timing alternatives, including coordinated
+changes to affected types. Each offered alternative must pass the whole setup's
+coverage and chronological progression checks, with no pending progression or
+repeated-final warnings. This is a bounded, limited search, not an exhaustive
+solver; one-time schedules, crossing-zero ranges and cases requiring different
+units or processing order may need manual review. In particular, D4W's asymmetric
+past-week endpoints can create overlap; alternatives causing repeated final
+reminders are rejected rather than presented as fixes.
+
+Suggestions are hypothetical calculations, **not D4W-confirmed ranges**. They do
+not approve script decisions. Each option has a button to copy conditions into
+Modify. From Basic, it creates a proposed draft from the current setup (replacing
+an existing proposed draft); current inputs stay intact. From Modify, it updates
+only the suggested conditions. Sending schedules remain unchanged. Changed
+proposed From/To fields are cleared deliberately: enter the actual D4W preview,
+confirm the type order and rerun the transition assessment. Previous review
+notes and script decisions are reset. Agree the timing with the practice first. Historical catch-up remains a
+separate requirement even when future coverage is clear. Input edits discard
+stale suggestions. A clear proposed setup does not trigger unnecessary changes.
+
+Validation: `node tests/suggestions.cjs` covers alternatives, progression and
+repeated-final rejection; `node tests/current-coverage-ui.cjs` covers both buttons,
+target selection, invalidation, proposed-setup handoff, required fresh D4W ranges,
+unchanged current inputs/schedules, and stale-option rejection. All existing
+Node suites and Flask page rendering pass. Visual browser testing remains
+outstanding in the build environment (Chromium executable unavailable).

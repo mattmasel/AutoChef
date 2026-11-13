@@ -27,8 +27,8 @@ field('coverage-evidence','','coverage_evidence');field('coverage-decision','pen
 form.append(get('auto-requested-batches'));
 const FormData=class {constructor(){this.entries=[...nodes.values()].filter(n=>n.name).map(n=>[n.name,n.value]);}*[Symbol.iterator](){yield* this.entries;}get(key){return this.entries.find(e=>e[0]===key)?.[1]??null;}getAll(key){return this.entries.filter(e=>e[0]===key).map(e=>e[1]);}has(key){return this.entries.some(e=>e[0]===key);}};
 class Event{constructor(type,options={}){this.type=type;Object.assign(this,options);}}
-const context=vm.createContext({window:{AutoChefSchedule:{update(){},format(){return 'Fortnightly';}},AutoChefCoverage:{evaluate:()=>({scripts:null,includeRanges:false,details:['Modify assessment']})}},document:{getElementById:get,createElement:tag=>new Element(tag),createDocumentFragment:()=>new Element()},FormData,Event,Intl});
-for(const file of ['coverage-engine.js','current-coverage-engine.js','preview-engine.js','auto-preview.js','coverage.js','current-coverage.js','output.js','agent-output.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../flaskr/static/js',file),'utf8'),context);
+const context=vm.createContext({window:{AutoChefSchedule:{update(){},format(){return 'Fortnightly';}},AutoChefCoverage:{evaluate:()=>({scripts:null,includeRanges:false,details:['Modify assessment']})}},document:{getElementById:get,createElement:tag=>new Element(tag),createDocumentFragment:()=>new Element()},FormData,Event,Intl,setTimeout:fn=>fn()});
+for(const file of ['coverage-engine.js','current-coverage-engine.js','preview-engine.js','auto-preview.js','coverage.js','current-coverage.js','suggestion-engine.js','suggestions.js','output.js','agent-output.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../flaskr/static/js',file),'utf8'),context);
 const click=id=>get(id).dispatchEvent(new Event('click'));
 const edit=(id,value)=>{get(id).value=value;get(id).dispatchEvent(new Event('input',{bubbles:true}));};
 const current=context.window.AutoChefCurrentCoverage;
@@ -54,3 +54,56 @@ edit('auto-requested-0-to','2026-11-30');assert.equal(comparison.evaluate().stat
 edit('coverage-evidence','Manual handling needed');edit('coverage-decision','manual');assert.equal(comparison.evaluate().scripts,true);
 edit('job-type','basic');assert.equal(get('auto-requested-0-to').value,'2026-11-30');assert.equal(current.evaluate().state,'clear');
 console.log('UI integration passed: automatic inputs, Basic and Modify results, output integration, mandatory gap policy, invalidation and job switching.');
+
+// Suggestion UI works on current in Basic and proposed in Modify; never grants approval.
+for(const [prefix,collection] of [['recall','recalls'],['requested','requested_recalls']]){
+ edit(prefix+'-mode','Advanced');
+ for(const [key,value] of [['amount','5'],['unit','week(s)'],['comparison','is'],['direction','future']])field(prefix+'-first-'+key,value,collection+'[0][first]['+key+']');
+ edit(prefix+'-weekly_interval','2');
+}
+edit('batch-0-from','2026-12-21');edit('batch-0-to','2026-12-27');
+click('current-suggest');
+assert.match(get('current-suggestions').textContent,/Option 1/);
+assert.match(get('current-suggestions').textContent,/more than 4 week/);
+assert.match(get('current-suggestions').textContent,/not confirmed by D4W/);
+edit('recall-weekly_interval','1');assert.equal(get('current-suggestions').textContent,'');
+click('current-suggest');assert.match(get('current-suggestions').textContent,/No ongoing gaps/);
+edit('job-type','modify');edit('auto-requested-0-from','2026-12-21');edit('auto-requested-0-to','2026-12-27');
+const decision=get('coverage-decision').value;
+click('modify-suggest');assert.match(get('modify-suggestions').textContent,/Option 1/);
+assert.equal(get('coverage-decision').value,decision);assert.equal(get('requested-weekly_interval').value,'2');
+edit('requested-weekly_interval','1');assert.equal(get('modify-suggestions').textContent,'');
+click('modify-suggest');assert.match(get('modify-suggestions').textContent,/No ongoing gaps/);
+edit('auto-requested-0-to','2026-12-28');click('modify-suggest');assert.match(get('modify-suggestions').textContent,/Suggestions unavailable/);
+console.log('Suggestion UI passed: both checklists, target selection, invalidation, mismatch handling and script-decision preservation.');
+
+// Handoff uses actual proposed controls, keeps current data, and clears calculated seeds.
+function rename(oldId,newId){const n=get(oldId);nodes.delete(oldId);n.id=newId;}
+rename('requested-mode','requested-0-mode');
+for(const key of ['amount','unit','comparison','direction'])rename('requested-first-'+key,'requested-0-first-'+key);
+for(const [key,value] of [['amount','1'],['unit','week(s)'],['comparison','is'],['direction','future']])field('requested-0-second-'+key,value,'requested_recalls[0][second]['+key+']');
+field('requested-0-and','on','requested_recalls[0][and]').type='checkbox';
+form.querySelectorAll=selector=>selector==='input, select'?[...nodes.values()].filter(n=>n.name):[];
+edit('job-type','basic');edit('recall-weekly_interval','2');
+let seed=context.window.AutoChefAutoPreview.build(false).groups[0].types;
+let candidate=context.window.AutoChefSuggestions.suggest(seed).options[0];
+let signature=context.window.AutoChefAutoPreview.signature();
+const sourceBefore=JSON.stringify([...new FormData(form)].filter(([name])=>name.startsWith('recalls[')||name.startsWith('batches[')));
+assert.equal(context.window.AutoChefSuggestionUI.applyOption(candidate,false,signature),true);
+assert.equal(get('job-type').value,'modify');
+assert.equal(get('requested-weekly_interval').value,'2');
+assert.equal(get('requested-0-mode').value,'Advanced');assert.equal(get('requested-0-and').checked,true);
+assert.equal(get('requested-0-first-amount').value,'4');assert.equal(get('requested-0-second-amount').value,'6');
+assert.equal(get('auto-requested-0-next').value,'2026-11-16');
+assert.equal(get('auto-requested-0-from').value,'');assert.equal(get('auto-requested-0-to').value,'');
+assert.equal(get('coverage-confirm').checked,false);assert.equal(get('coverage-decision').value,'pending');assert.equal(get('coverage-evidence').value,'');
+assert.equal(comparison.evaluate().state,'incomplete');assert.equal(comparison.evaluate().scripts,null);
+assert.equal(JSON.stringify([...new FormData(form)].filter(([name])=>name.startsWith('recalls[')||name.startsWith('batches['))),sourceBefore);
+assert.match(get('suggestion-apply-status').textContent,/actual D4W/);
+// An old button cannot apply an option after any input change.
+assert.equal(context.window.AutoChefSuggestionUI.applyOption(candidate,true,signature),false);
+// Applying from Modify also keeps schedules and requires fresh D4W ranges.
+signature=context.window.AutoChefAutoPreview.signature();
+assert.equal(context.window.AutoChefSuggestionUI.applyOption(candidate,true,signature),true);
+assert.equal(get('requested-weekly_interval').value,'2');assert.equal(get('auto-requested-0-from').value,'');
+console.log('Suggestion handoff passed: proposed conditions, unchanged source/schedules, required D4W seeds, reset decisions and stale-option rejection.');
