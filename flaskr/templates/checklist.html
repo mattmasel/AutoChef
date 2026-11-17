@@ -140,6 +140,7 @@
       <label class="form-label fw-semibold" for="job-type">Job type</label>
       <select class="form-select" id="job-type" name="job_type">
         <option value="basic">Basic Checklist</option>
+        <option value="manual">Manual Checklist</option>
         <option value="modify">Modify Recall Setup</option>
       </select>
       <p id="suggestion-apply-status" class="small mt-3" role="status" aria-live="polite"></p>
@@ -183,12 +184,21 @@
   <details class="card rounded-4 mb-4" open>
     <summary class="p-4 fw-semibold">4. Upcoming recall batches</summary>
     <div class="card-body px-4 pt-0">
-      <p class="text-body-secondary">Enter the next batch date and its actual D4W Recall From/To range for each type. Type names follow section 3. Later batches are calculated from the schedule. Batch times use practice local time; 09:00 is a placeholder — use actual times if stage order matters.</p>
+      <p id="manual-batch-help" class="text-body-secondary" hidden>Record the upcoming batches you reviewed. Batch dates are needed for SQL expiry when you select the SQL option.</p>
+      <p id="automatic-batch-help" class="text-body-secondary">Enter the next batch date and its actual D4W Recall From/To range for each type. Type names follow section 3. Later batches are calculated from the schedule. Batch times use practice local time; 09:00 is a placeholder — use actual times if stage order matters.</p>
       <p id="batch-empty" class="small text-body-secondary" hidden>Add a recall type in section 3 to enter its upcoming batch.</p>
       <div id="recall-batches" class="d-grid gap-3"></div>
     </div>
   </details>
 
+  <fieldset id="manual-review" class="card rounded-4 p-4 mb-4" hidden disabled>
+    <legend class="float-none w-auto fs-6 fw-semibold">Manual review</legend>
+    <label class="form-label" for="manual-findings">Checklist findings</label>
+    <textarea class="form-control mb-3" id="manual-findings" name="manual_findings" rows="3"></textarea>
+    <label class="form-label" for="manual-actions">Agent booking steps</label>
+    <textarea class="form-control mb-3" id="manual-actions" name="manual_actions" rows="3" placeholder="One step per line"></textarea>
+    <label><input type="checkbox" id="manual-sql" name="manual_sql"> Include SQL expiry, recall reassignment ranges and standard SQL booking steps</label>
+  </fieldset>
   <details id="current-coverage-section" class="card rounded-4 mb-4" open>
     <summary class="p-4 fw-semibold">4a. Check current setup for gaps</summary>
     <fieldset id="current-coverage-fields" class="card-body px-4 pt-0">
@@ -323,7 +333,8 @@
 <section class="card rounded-4 mb-4" aria-labelledby="agent-heading">
   <div class="card-body p-4">
     <h2 id="agent-heading" class="h5">Agent instructions</h2>
-    <p class="text-body-secondary">Modify Recall Setup requires a reviewed coverage/script decision in 8a. SQL and bulk modification instructions are included only when scripts are required. Basic Checklist includes the current-setup assessment from 4a and retains its existing SQL workflow for corrective work; a clear preview does not approve or cancel that work. Expiry is one day before the earliest upcoming batch in section 4. Today uses Australia/Perth time. Review approval wording and ensure the SQL and bulk mod form are attached before sending.</p>
+    <p id="manual-agent-help" class="text-body-secondary" hidden>Generate instructions from your findings and booking steps. Select the SQL option in Manual review when the job needs scripts.</p>
+    <p id="automatic-agent-help" class="text-body-secondary">Modify Recall Setup requires a reviewed coverage/script decision in 8a. SQL and bulk modification instructions are included only when scripts are required. Basic Checklist includes the current-setup assessment from 4a and retains its existing SQL workflow for corrective work; a clear preview does not approve or cancel that work. Expiry is one day before the earliest upcoming batch in section 4. Today uses Australia/Perth time. Review approval wording and ensure the SQL and bulk mod form are attached before sending.</p>
     <div class="d-flex flex-wrap gap-2 mb-3">
       <button type="button" id="generate-agent" class="btn btn-success">Generate agent instructions</button>
       <button type="button" id="copy-agent" class="btn btn-outline-secondary" disabled>Copy formatted instructions</button>
@@ -388,9 +399,9 @@
         <label class="form-label" for="batch-__INDEX__-type">Recall type name</label>
         <input class="form-control" type="text" id="batch-__INDEX__-type" name="batches[__INDEX__][type]" placeholder="Enter type name in section 3" readonly>
       </div>
-      <div class="col-md-4"><label class="form-label" for="batch-__INDEX__-time">Batch time</label><input class="form-control" type="time" value="09:00" id="batch-__INDEX__-time" name="batches[__INDEX__][time]"></div>
-      <div class="col-md-4"><label class="form-label" for="batch-__INDEX__-from">Recall Date From</label><input class="form-control" type="date" id="batch-__INDEX__-from" name="batches[__INDEX__][from]"></div>
-      <div class="col-md-4"><label class="form-label" for="batch-__INDEX__-to">Recall Date To</label><input class="form-control" type="date" id="batch-__INDEX__-to" name="batches[__INDEX__][to]"></div>
+      <div class="col-md-4" data-preview-only><label class="form-label" for="batch-__INDEX__-time">Batch time</label><input class="form-control" type="time" value="09:00" id="batch-__INDEX__-time" name="batches[__INDEX__][time]"></div>
+      <div class="col-md-4" data-preview-only><label class="form-label" for="batch-__INDEX__-from">Recall Date From</label><input class="form-control" type="date" id="batch-__INDEX__-from" name="batches[__INDEX__][from]"></div>
+      <div class="col-md-4" data-preview-only><label class="form-label" for="batch-__INDEX__-to">Recall Date To</label><input class="form-control" type="date" id="batch-__INDEX__-to" name="batches[__INDEX__][to]"></div>
       <div class="col-md-4">
         <label class="form-label" for="batch-__INDEX__-patients">Number of patients</label>
         <input class="form-control" type="number" min="0" step="1" id="batch-__INDEX__-patients" name="batches[__INDEX__][patients]">

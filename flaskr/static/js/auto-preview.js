@@ -5,7 +5,9 @@
  function sync(){
   const modify=$('job-type').value==='modify';
   $('coverage-section').hidden=!modify;$('coverage-fields').disabled=!modify;
-  $('current-coverage-section').hidden=modify;$('current-coverage-fields').disabled=modify;
+  const basic=$('job-type').value==='basic';
+  $('current-coverage-section').hidden=!basic;$('current-coverage-fields').disabled=!basic;
+  if(!modify)return;
   const n=Number($('requested-count').value);
   if(!Number.isSafeInteger(n)||n<0||n>50)return;
   while(requested.length<n){

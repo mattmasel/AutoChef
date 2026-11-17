@@ -27,11 +27,13 @@
     for (const id of ["recall-count", "requested-count"]) {
       document.getElementById(id).dispatchEvent(new Event("change", { bubbles: true }));
     }
-    const modify = document.getElementById("job-type").value === "modify";
+    const job = document.getElementById("job-type").value;
+    const modify = job === "modify";
+    const manual = job === "manual";
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const coverage = modify ? window.AutoChefCoverage.evaluate() : null;
-    const currentCoverage = !modify ? window.AutoChefCurrentCoverage.evaluate() : null;
-    const scripts = !modify || coverage.scripts === true;
+    const currentCoverage = job === "basic" ? window.AutoChefCurrentCoverage.evaluate() : null;
+    const scripts = job === "basic" || coverage?.scripts === true || (manual && document.getElementById("manual-sql").checked);
     const fields = [...form.querySelectorAll("input, select")].filter(field => {
       if (field.matches(":disabled")) return false;
       if (/^(requested_ranges\[|batches\[.*\[date\])/.test(field.name)) return scripts;
@@ -57,7 +59,7 @@
     const value = key => String(data.get(key) ?? "").trim();
     const total = Number(data.get("recall_count"));
     const targetTotal = modify ? Number(data.get("requested_recall_count")) : total;
-    if (!total || !targetTotal) { fail("Add at least one current recall type and one active date-range type."); return; }
+    if ((!manual || scripts) && (!total || !targetTotal)) { fail("Add at least one current recall type and one active date-range type."); return; }
     for (const field of fields) {
       if ((/\[(name|from|to|date)\]$/.test(field.name)) && !field.value.trim()) {
         fail("Complete recall type names, all upcoming batch dates and active date ranges before generating instructions.", field); return;
@@ -106,7 +108,7 @@
       }
     }
     line("h1", "Agent Instructions");
-    line("p", scripts ? "Below checklist approved and SQL supplied." : "Below checklist approved for schedule changes without SQL within the reviewed scope.");
+    if (!manual) line("p", scripts ? "Below checklist approved and SQL supplied." : "Below checklist approved for schedule changes without SQL within the reviewed scope.");
     line("h3", "Current Setup");
     setup("recalls", total);
     if (modify) { line("h3", "New Setup"); setup("requested_recalls", targetTotal); }
@@ -114,7 +116,11 @@
       line("h3", "Schedule change coverage assessment");
       coverage.details.forEach(detail => line("p", detail));
     }
-    if (!modify) {
+    if (manual && data.get("manual_findings")?.trim()) {
+      line("h3", "Manual review findings");
+      data.get("manual_findings").trim().split(/\r?\n/).filter(Boolean).forEach(note => line("p", note));
+    }
+    if (currentCoverage) {
       line("h3", "Current setup coverage assessment");
       currentCoverage.details.forEach(detail => line("p", detail));
     }
@@ -122,7 +128,7 @@
     line("h4", "Script Expiry Warning");
     line("p", `The attached SQL is only usable between ${todayText} and ${formatDate(expiry)}. If running outside those dates, please contact the automation team for an updated SQL.`);
     }
-    line("h3", "Prior to Booking");
+    if (scripts || !manual) line("h3", "Prior to Booking");
     if (scripts) {
     line("p", "Have customer sign attached bulk mod form requesting the following:");
     const names = [];
@@ -134,7 +140,7 @@
     const typeList = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} or ${names.at(-1)}`;
     line("p", `Adjust patient's recall type and dates to be ${names.length > 1 ? "either " : ""}${typeList} depending on last treatment date.`, true);
     line("p", "Book a time with customer to run SQL and make changes to schedule");
-    } else {
+    } else if (!manual) {
       line("p", "Confirm the reviewed schedule changes and book a time with the customer. No SQL or recall reassignment is included in this booking.");
     }
     line("h3", "During Booking");
@@ -143,11 +149,15 @@
       "Backup the database",
       'Make changes to automation (if required - see "New Setup")',
       "Run attached SQL (run 35005 first then 31628 second)"
-    ] : [
+    ] : manual ? [] : [
       "Backup the database",
       'Make the agreed automation changes (see "New Setup")',
       "Verify upcoming batch coverage and confirm the reviewed patients remain eligible under the new schedule"
     ];
+    if (manual) {
+      bookingSteps.push(...value("manual_actions").split(/\r?\n/).map(step => step.trim()).filter(Boolean));
+      if (!bookingSteps.length) line("p", "No booking steps recorded.");
+    }
     const list = document.createElement("ol");
     list.style.cssText = "margin:0 0 16px;padding-left:24px;";
     bookingSteps.forEach((step, i) => {
@@ -159,7 +169,7 @@
     plainText = text.join("\n").trim();
     generated = true; stale = false; generatedDay = perthDay();
     richButton.disabled = plainButton.disabled = false;
-    status.textContent = scripts ? "Instructions generated. Review the approval wording, attachments and dates before copying." : "Instructions generated without SQL steps. Review the coverage scope and agreed schedule changes before copying.";
+    status.textContent = manual ? "Instructions generated. Review your manual findings and booking steps before copying." : scripts ? "Instructions generated. Review the approval wording, attachments and dates before copying." : "Instructions generated without SQL steps. Review the coverage scope and agreed schedule changes before copying.";
   }
 
   function selectPreview() {

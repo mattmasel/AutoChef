@@ -107,3 +107,25 @@ signature=context.window.AutoChefAutoPreview.signature();
 assert.equal(context.window.AutoChefSuggestionUI.applyOption(candidate,true,signature),true);
 assert.equal(get('requested-weekly_interval').value,'2');assert.equal(get('auto-requested-0-from').value,'');
 console.log('Suggestion handoff passed: proposed conditions, unchanged source/schedules, required D4W seeds, reset decisions and stale-option rejection.');
+
+// Manual jobs generate both outputs independently of either coverage engine.
+edit('job-type','manual');
+for (const section of ['current-coverage-section','coverage-section']) assert.equal(get(section).hidden,true);
+context.window.AutoChefCurrentCoverage.evaluate = context.window.AutoChefCoverage.evaluate = () => {
+ throw new Error('Manual output called a coverage evaluator');
+};
+field('manual-findings','Checked the fortnightly batches in D4W','manual_findings');
+field('manual-actions','Confirm next batch with practice','manual_actions');
+edit('batch-0-date','');
+click('generate-notes');
+assert.match(get('notes-preview').textContent,/Checked the fortnightly batches/);
+assert.doesNotMatch(get('notes-preview').textContent,/coverage assessment|Steps Performed/);
+click('generate-agent');
+assert.match(get('agent-preview').textContent,/Confirm next batch with practice/);
+assert.doesNotMatch(get('agent-preview').textContent,/SQL supplied|Script Expiry Warning|approved/);
+get('manual-sql').checked=true;
+edit('batch-0-date','31/12/2099');
+click('generate-agent');
+assert.match(get('agent-preview').textContent,/30\/12\/2099/);
+assert.match(get('agent-preview').textContent,/Move all patients/);
+console.log('Manual outputs passed with and without SQL.');

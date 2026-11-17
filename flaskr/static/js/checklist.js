@@ -14,8 +14,8 @@
   const requestedContainer = document.getElementById("requested-types");
   const requestedEntries = [];
   const jobType = document.getElementById("job-type");
-  const draftsByJob = { basic: [], modify: [] };
-  const isBasic = () => jobType.value === "basic";
+  const draftsByJob = { basic: [], manual: [], modify: [] };
+  const usesCurrentRanges = () => jobType.value !== "modify";
   const ranges = [];
   const existingRanges = [];
   const existingDrafts = [];
@@ -24,12 +24,19 @@
   let activeRangeCount = 0;
 
   function updateJobType() {
-    const basic = isBasic();
+    const basic = usesCurrentRanges();
+    const manual = jobType.value === "manual";
+    const review = document.getElementById("manual-review");
+    review.hidden = review.disabled = !manual;
+    document.getElementById("manual-agent-help").hidden = !manual;
+    document.getElementById("automatic-agent-help").hidden = manual;
+    document.getElementById("manual-batch-help").hidden = !manual;
+    document.getElementById("automatic-batch-help").hidden = manual;
     document.getElementById("existing-range-section").hidden = basic;
     document.getElementById("existing-range-fields").disabled = basic;
     document.getElementById("requested-section").hidden = basic;
     document.getElementById("requested-fields").disabled = basic;
-    rangeDrafts = draftsByJob[basic ? "basic" : "modify"];
+    rangeDrafts = draftsByJob[jobType.value];
     const section = basic ? "3" : "8";
     document.getElementById("range-heading").textContent = basic ? "9. Recall date ranges" : "9. Requested recall date ranges";
     document.getElementById("range-help").textContent = `Types follow the order in section ${section}, newest dates first. Enter each From date except the last. Each following To date is calculated as the previous From date minus one day.`;
@@ -56,7 +63,7 @@
   }
 
   function syncRanges() {
-    syncRangeGroup("range", activeRangeCount, rangeDrafts, isBasic() ? "recall" : "requested", isBasic() ? "3" : "8");
+    syncRangeGroup("range", activeRangeCount, rangeDrafts, usesCurrentRanges() ? "recall" : "requested", usesCurrentRanges() ? "3" : "8");
     syncRangeGroup("existing-range", existingCount, existingDrafts, "recall", "3");
   }
 
@@ -116,7 +123,7 @@
     }
     setVisibleRows(requestedEntries, total);
     document.getElementById("requested-status").textContent = `${total} requested recall ${total === 1 ? "type" : "types"}`;
-    if (!isBasic()) updateRanges(total);
+    if (!usesCurrentRanges()) updateRanges(total);
   }
 
   function addRow(templateId, containerId, index) {
@@ -209,6 +216,13 @@
       batches.push(addRow("batch-template", "recall-batches", batches.length));
     }
     setVisibleRows(batches, total);
+    const manual = jobType.value === "manual";
+    for (const batch of batches) {
+      for (const panel of batch.querySelectorAll("[data-preview-only]")) {
+        panel.hidden = manual;
+        panel.querySelector("input").disabled = manual;
+      }
+    }
     document.getElementById("batch-empty").hidden = total !== 0;
     syncBatchNames();
     while (existingRanges.length < total) existingRanges.push(addRow("existing-range-template", "existing-ranges", existingRanges.length));
@@ -216,7 +230,7 @@
     existingCount = total;
     setVisibleRows(existingRanges, total);
     document.getElementById("existing-range-empty").hidden = total !== 0;
-    if (isBasic()) updateRanges(total);
+    if (usesCurrentRanges()) updateRanges(total);
     else syncRangeGroup("existing-range", existingCount, existingDrafts, "recall", "3");
   }
 

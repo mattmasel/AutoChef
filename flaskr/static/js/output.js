@@ -24,9 +24,11 @@
     for (const id of ["recall-count", "period-count", "requested-count"]) {
       document.getElementById(id).dispatchEvent(new Event("change", { bubbles: true }));
     }
-    const modify = document.getElementById("job-type").value === "modify";
+    const job = document.getElementById("job-type").value;
+    const modify = job === "modify";
+    const manual = job === "manual";
     const coverage = modify ? window.AutoChefCoverage.evaluate() : null;
-    const currentCoverage = !modify ? window.AutoChefCurrentCoverage.evaluate() : null;
+    const currentCoverage = job === "basic" ? window.AutoChefCurrentCoverage.evaluate() : null;
     // Only validate script ranges when they are included in this output.
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const relevant = [...form.querySelectorAll("input, select")].filter((field) => {
@@ -59,20 +61,22 @@
       text.push(content, "");
     }
     line("h1", "Automation Testing Phase");
-    line("h2", "Steps Performed");
-    const list = document.createElement("ul");
-    list.style.cssText = "margin:0 0 16px;padding-left:24px;";
-    for (const step of [
-      "Ran select statement to check patient recall type including period",
-      "Created manual batch to see if any patients are on both automation and manual",
-      "Viewed 3 test patients recall information",
-      "Viewed upcoming batches"
-    ]) {
-      const item = document.createElement("li"); item.textContent = step; list.append(item);
-      text.push(`- ${step}`);
+    if (!manual) {
+      line("h2", "Steps Performed");
+      const list = document.createElement("ul");
+      list.style.cssText = "margin:0 0 16px;padding-left:24px;";
+      for (const step of [
+        "Ran select statement to check patient recall type including period",
+        "Created manual batch to see if any patients are on both automation and manual",
+        "Viewed 3 test patients recall information",
+        "Viewed upcoming batches"
+      ]) {
+        const item = document.createElement("li"); item.textContent = step; list.append(item);
+        text.push(`- ${step}`);
+      }
+      fragment.append(list); text.push("");
     }
-    fragment.append(list); text.push("");
-    line("h2", modify && coverage.scripts !== true ? "Before Changes — Testing" : "Pre-SQL Testing");
+    line("h2", (manual && !data.has("manual_sql")) || (modify && coverage.scripts !== true) ? "Before Changes — Testing" : "Pre-SQL Testing");
     line("h3", "Automation Set");
     line("p", value("recall_set_name"));
     line("h3", "Test Patients");
@@ -118,7 +122,11 @@
         }
       }
     }
-    if (!modify) {
+    if (manual && data.get("manual_findings")?.trim()) {
+      line("h3", "Manual review findings");
+      data.get("manual_findings").trim().split(/\r?\n/).filter(Boolean).forEach(note => line("p", note));
+    }
+    if (currentCoverage) {
       line("h3", "Current setup coverage assessment");
       currentCoverage.details.forEach(detail => line("p", detail));
     }
@@ -129,7 +137,7 @@
     if (!periods) line("p", "None recorded");
     line("h3", "Number of Patients on Manual Recalls");
     line("p", value("manual_patients"));
-    line("h2", modify && coverage.scripts !== true ? "After Changes — Testing" : "Post-SQL Testing");
+    line("h2", (manual && !data.has("manual_sql")) || (modify && coverage.scripts !== true) ? "After Changes — Testing" : "Post-SQL Testing");
     line("h3", "Test Patients");
     for (let i = 1; i <= 3; i++) {
       // Read shared identity directly from pre-SQL fields so it cannot diverge.
