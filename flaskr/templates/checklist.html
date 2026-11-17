@@ -140,9 +140,9 @@
       <label class="form-label fw-semibold" for="job-type">Job type</label>
       <select class="form-select" id="job-type" name="job_type">
         <option value="basic">Basic Checklist</option>
-        <option value="manual">Manual Checklist</option>
-        <option value="modify">Modify Recall Setup</option>
+        <option value="experimental">Experimental Checklist</option>
       </select>
+    <label class="mt-3"><input type="checkbox" id="manual-new-setup" name="manual_new_setup" aria-controls="requested-section" aria-expanded="false"> Include New setup</label>
       <p id="suggestion-apply-status" class="small mt-3" role="status" aria-live="polite"></p>
     </div>
   </div>
@@ -197,7 +197,6 @@
     <textarea class="form-control mb-3" id="manual-findings" name="manual_findings" rows="3"></textarea>
     <label class="form-label" for="manual-actions">Agent booking steps</label>
     <textarea class="form-control mb-3" id="manual-actions" name="manual_actions" rows="3" placeholder="One step per line"></textarea>
-    <label class="mb-2"><input type="checkbox" id="manual-new-setup" name="manual_new_setup" aria-controls="requested-section" aria-expanded="false"> Include New setup</label>
     <label><input type="checkbox" id="manual-sql" name="manual_sql"> Include SQL expiry, recall reassignment ranges and standard SQL booking steps</label>
   </fieldset>
   <details id="current-coverage-section" class="card rounded-4 mb-4" open>
@@ -259,18 +258,21 @@
       <p class="form-text" id="requested-help">Reducing the count hides extra types; increasing it restores their entries until you leave this page.</p>
       <p id="requested-status" class="small text-body-secondary" role="status"></p>
       <div id="requested-types" class="d-grid gap-3"></div>
+      <h3 class="h6 mt-4">Upcoming recall batches — New setup</h3>
+      <p class="text-body-secondary">Record the next D4W batch for each new recall type.</p>
+      <div id="auto-requested-batches" class="d-grid gap-3 mb-3"></div>
     </fieldset>
   </details>
   <details id="coverage-section" class="card rounded-4 mb-4" open hidden>
     <summary class="p-4 fw-semibold">8a. Schedule change coverage check</summary>
     <fieldset id="coverage-fields" class="card-body px-4 pt-0" disabled>
       <p>Compare the old upcoming preview (what would happen if unchanged) with the new upcoming preview. Copy the actual Run date, Date From and Date To from D4W. These are separate from the calculated script reassignment ranges in 3a and 9.</p>
-      <p class="text-body-secondary">Current next batches come from section 4. Enter only the proposed next batch for each requested type below. Later runs, starting recall-date scopes and the common checking period are calculated automatically.</p>
-      <div id="auto-requested-batches" class="d-grid gap-3 mb-3"></div>
+      <p class="text-body-secondary">Current next batches come from section 4. Proposed next batches come from New setup in section 8. Later runs, starting recall-date scopes and the common checking period are calculated automatically.</p>
+
       <label class="form-check mb-3"><input id="coverage-confirm" type="checkbox" class="form-check-input"> Current and requested types correspond in the same order, with the final reminder last. The proposed setup takes effect before all entered next batches.</label>
       <p class="form-text">Added, removed or reordered types require manual review. If the change happens after an entered batch, update the next-batch information to reflect the intended changeover. Use practice-local times; simultaneous overlapping stages require verified processing times.</p>
       <details class="mb-3"><summary>Calculated upcoming batches — first six per type</summary><div id="modify-generated-preview" class="table-responsive mt-3"></div></details>
-      <button id="coverage-check" type="button" class="btn btn-success mb-3">Check coverage</button>
+      <button id="coverage-check" type="button" class="btn btn-success mb-3">Check new setup and compare schedules</button>
       <div id="coverage-result" class="border rounded-3 p-3 mb-4" role="status" aria-live="polite">Not assessed yet.</div>
       <button id="modify-suggest" type="button" class="btn btn-outline-primary mb-3">Suggest changes — keep schedule</button>
       <div id="modify-suggestions" aria-live="polite"></div>
@@ -335,7 +337,7 @@
   <div class="card-body p-4">
     <h2 id="agent-heading" class="h5">Agent instructions</h2>
     <p id="manual-agent-help" class="text-body-secondary" hidden>Generate instructions from your findings and booking steps. Select the SQL option in Manual review when the job needs scripts.</p>
-    <p id="automatic-agent-help" class="text-body-secondary">Modify Recall Setup requires a reviewed coverage/script decision in 8a. SQL and bulk modification instructions are included only when scripts are required. Basic Checklist includes the current-setup assessment from 4a and retains its existing SQL workflow for corrective work; a clear preview does not approve or cancel that work. Expiry is one day before the earliest upcoming batch in section 4. Today uses Australia/Perth time. Review approval wording and ensure the SQL and bulk mod form are attached before sending.</p>
+    <p id="automatic-agent-help" class="text-body-secondary">Experimental coverage results use the entered D4W batch windows. When comparing a new setup, review the script decision in section 8a before generating booking instructions.</p>
     <div class="d-flex flex-wrap gap-2 mb-3">
       <button type="button" id="generate-agent" class="btn btn-success">Generate agent instructions</button>
       <button type="button" id="copy-agent" class="btn btn-outline-secondary" disabled>Copy formatted instructions</button>

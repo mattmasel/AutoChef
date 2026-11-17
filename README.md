@@ -105,14 +105,9 @@ within the current page. No actual automation changes are executed by this form.
 
 ## Job type
 
-The dropdown at the start defaults to **Basic Checklist**. Basic hides and
-disables Step 8; Step 9 takes its count and type names from the current types in
-Step 3. **Modify Recall Setup** shows Step 8 and links Step 9 to the requested
-types, as before. Switching modes preserves both sets of entries and keeps
-separate date-range drafts for each mode during the current page visit.
+**Basic Checklist** is the default. Enter your manual findings and generate ticket notes and agent instructions. Select **Include New setup** to record a proposed schedule. SQL instructions are optional.
 
-The pre-SQL ticket template stays the same in both modes. Switching jobs marks
-previously generated notes stale until regenerated. No new dependencies needed.
+**Experimental Checklist** checks gaps between current batches and progression through reminder types. Select **Include New setup** to check proposed batches and compare the changeover. Both checks use the D4W next batch and its inclusive recall-date range for each type.
 
 ## Requested recall date ranges
 
@@ -197,7 +192,7 @@ works for the current page.
 
 ## Agent instructions
 
-Use **Generate agent instructions** beneath the ticket notes. This creates a separate preview with formatted and plain-text copy buttons. Basic Checklist includes Current Setup; Modify Recall Setup also includes New Setup. Bulk modification lines use the active Step 9 ranges and names. All three During Booking steps remain in both jobs.
+Use **Generate agent instructions** beneath the ticket notes. This creates a separate preview with formatted and plain-text copy buttons. Both checklists include Current Setup and optionally New setup. Bulk modification lines use the active Step 9 ranges and names. All three During Booking steps remain in both jobs.
 
 The script window starts on the generation date in Australia/Perth and ends one calendar day before the earliest current upcoming batch date in Step 4. Complete all batch dates, active names and range boundaries before generating. A batch on or before today blocks generation; update the batch information and obtain updated SQL. This output does not generate, attach, approve or execute SQL: review the fixed approval wording and supply the attachments before sending.
 
@@ -310,12 +305,12 @@ updates and stale revisions, approval and duplicate review, repeated approval,
 discard, CSRF, escaping, matching exclusion, approved-step matching, and copy/save
 payload separation. Visual browser testing was not performed.
 
-Modify Recall Setup also includes Existing recall date ranges directly below
+Experimental Checklist with New setup also includes Existing recall date ranges directly below
 Current Recall Set Types and Schedule. These follow the current type names and
 count, independently of the requested ranges. Both use newest-first From dates,
 calculate each following To date as the preceding From date minus one day, and
 use 01-01-3000 / 01-01-1900 for the outer boundaries. Existing ranges appear in
-Pre-SQL ticket notes for Modify Recall Setup only. Entries survive count and
+Pre-SQL ticket notes for an experimental schedule change only. Entries survive count and
 job-type changes while the page remains open.
 
 ## Automation Todo

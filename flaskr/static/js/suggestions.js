@@ -9,7 +9,7 @@
   if(auto.signature()!==expectedSignature){status.textContent='The setup changed. Generate fresh suggestions before choosing one.';return false;}
   const snapshot=new FormData(form),types=option.preview.groups[0].types;
   if(!modify){
-   $('job-type').value='modify';$('job-type').dispatchEvent(new Event('change',{bubbles:true}));
+   $('manual-new-setup').checked=true;$('manual-new-setup').dispatchEvent(new Event('change',{bubbles:true}));
    $('requested-count').value=String(types.length);$('requested-count').dispatchEvent(new Event('change',{bubbles:true}));
    // Copy the current setup into a proposed draft; never edit current inputs.
    for(const field of form.querySelectorAll('input, select')){
@@ -39,7 +39,7 @@
   types.forEach((_,i)=>$(`requested-${i}-mode`).dispatchEvent(new Event('change',{bubbles:true})));
   $('coverage-confirm').checked=false;$('coverage-decision').value='pending';$('coverage-evidence').value='';
   form.dispatchEvent(new Event('change',{bubbles:true}));
-  status.textContent='Suggested conditions copied to Modify Recall Setup. Sending schedules are unchanged. Enter the actual D4W From/To for each changed type, confirm the type order, and check coverage again. Catch-up scripts for previously missed patients still need separate review.';
+  status.textContent='Suggested conditions copied to New setup. Sending schedules are unchanged. Enter the actual D4W From/To for each changed type, confirm the type order, and check coverage again. Catch-up scripts for previously missed patients still need separate review.';
   return true;
  }
  window.AutoChefSuggestionUI={applyOption};
