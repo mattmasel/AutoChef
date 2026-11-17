@@ -197,6 +197,7 @@
     <textarea class="form-control mb-3" id="manual-findings" name="manual_findings" rows="3"></textarea>
     <label class="form-label" for="manual-actions">Agent booking steps</label>
     <textarea class="form-control mb-3" id="manual-actions" name="manual_actions" rows="3" placeholder="One step per line"></textarea>
+    <label class="mb-2"><input type="checkbox" id="manual-new-setup" name="manual_new_setup" aria-controls="requested-section" aria-expanded="false"> Include New setup</label>
     <label><input type="checkbox" id="manual-sql" name="manual_sql"> Include SQL expiry, recall reassignment ranges and standard SQL booking steps</label>
   </fieldset>
   <details id="current-coverage-section" class="card rounded-4 mb-4" open>
@@ -250,7 +251,7 @@
     </div>
   </details>
   <details id="requested-section" class="card rounded-4 mb-4" open hidden>
-    <summary class="p-4 fw-semibold">8. Requested Recall Set Types and Schedule</summary>
+    <summary id="requested-heading" class="p-4 fw-semibold">8. Requested Recall Set Types and Schedule</summary>
     <fieldset id="requested-fields" class="card-body px-4 pt-0" disabled>
       <p class="text-body-secondary">Record the requested setup here. These entries are separate from the current recall types and upcoming batches.</p>
       <label class="form-label" for="requested-count">Number of requested recall types</label>

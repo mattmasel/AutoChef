@@ -32,6 +32,7 @@
     // Only validate script ranges when they are included in this output.
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const relevant = [...form.querySelectorAll("input, select")].filter((field) => {
+      if (manual && /^(requested_recalls\[|requested_recall_count$)/.test(field.name)) return !field.matches(":disabled");
       if (/^(existing_ranges|requested_ranges)\[/.test(field.name)) return !field.matches(":disabled") && Boolean(coverage?.includeRanges);
       return !field.matches(":disabled") && /^(recall_count|period_count|recalls\[|existing_ranges\[|batches\[|periods\[|Px\d|PostPx\d)/.test(field.name);
     });
@@ -92,18 +93,25 @@
     function condition(prefix, row) {
       return `${value(`${prefix}[${row}][comparison]`)} ${value(`${prefix}[${row}][amount]`)} ${value(`${prefix}[${row}][unit]`)} in the ${value(`${prefix}[${row}][direction]`)}`;
     }
-    for (let i = 0; i < total; i++) {
-      const prefix = `recalls[${i}]`;
-      const schedule = window.AutoChefSchedule.format(data, prefix);
-      let period = value(`${prefix}[period]`);
-      if (data.get(`${prefix}[mode]`) === "Advanced") {
-        period = condition(prefix, "first");
-        period = period.charAt(0).toUpperCase() + period.slice(1);
-        if (data.has(`${prefix}[and]`)) period += ` AND ${condition(prefix, "second")}`;
+    function writeSetup(collection, count) {
+      for (let i = 0; i < count; i++) {
+        const prefix = `${collection}[${i}]`;
+        const schedule = window.AutoChefSchedule.format(data, prefix);
+        let period = value(`${prefix}[period]`);
+        if (data.get(`${prefix}[mode]`) === "Advanced") {
+          period = condition(prefix, "first");
+          period = period.charAt(0).toUpperCase() + period.slice(1);
+          if (data.has(`${prefix}[and]`)) period += ` AND ${condition(prefix, "second")}`;
+        }
+        line("p", `${value(`${prefix}[name]`)} - ${schedule} - ${period}`);
       }
-      line("p", `${value(`${prefix}[name]`)} - ${schedule} - ${period}`);
+      if (!count) line("p", "None recorded");
     }
-    if (!total) line("p", "None recorded");
+    writeSetup("recalls", total);
+    if (manual && data.has("manual_new_setup")) {
+      line("h3", "New setup");
+      writeSetup("requested_recalls", Number(data.get("requested_recall_count")));
+    }
     if (modify) {
       line("h3", "Schedule change coverage assessment");
       coverage.details.forEach(detail => line("p", detail));

@@ -129,3 +129,17 @@ click('generate-agent');
 assert.match(get('agent-preview').textContent,/30\/12\/2099/);
 assert.match(get('agent-preview').textContent,/Move all patients/);
 console.log('Manual outputs passed with and without SQL.');
+
+field('manual-new-setup','on','manual_new_setup');
+edit('requested-0-name','Modified reminder');
+for (const sql of [false,true]) {
+ get('manual-sql').checked=sql;
+ for (const [button,preview] of [['generate-notes','notes-preview'],['generate-agent','agent-preview']]) {
+  click(button);
+  assert.match(get(preview).textContent,/New setup[\s\S]*Modified reminder/);
+ }
+}
+get('manual-new-setup').name='';
+click('generate-notes');
+click('generate-agent');
+for (const id of ['notes-preview','agent-preview']) assert.doesNotMatch(get(id).textContent,/Modified reminder/);

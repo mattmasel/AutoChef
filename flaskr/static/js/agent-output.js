@@ -58,7 +58,8 @@
     const data = new FormData(form);
     const value = key => String(data.get(key) ?? "").trim();
     const total = Number(data.get("recall_count"));
-    const targetTotal = modify ? Number(data.get("requested_recall_count")) : total;
+    const manualNewSetup = manual && data.has("manual_new_setup");
+    const targetTotal = (modify || manualNewSetup) ? Number(data.get("requested_recall_count")) : total;
     if ((!manual || scripts) && (!total || !targetTotal)) { fail("Add at least one current recall type and one active date-range type."); return; }
     for (const field of fields) {
       if ((/\[(name|from|to|date)\]$/.test(field.name)) && !field.value.trim()) {
@@ -111,7 +112,8 @@
     if (!manual) line("p", scripts ? "Below checklist approved and SQL supplied." : "Below checklist approved for schedule changes without SQL within the reviewed scope.");
     line("h3", "Current Setup");
     setup("recalls", total);
-    if (modify) { line("h3", "New Setup"); setup("requested_recalls", targetTotal); }
+    if (manualNewSetup && !targetTotal) { fail("Enter at least one recall type for New setup.", document.getElementById("requested-count")); return; }
+    if (modify || manualNewSetup) { line("h3", manualNewSetup ? "New setup" : "New Setup"); setup("requested_recalls", targetTotal); }
     if (modify) {
       line("h3", "Schedule change coverage assessment");
       coverage.details.forEach(detail => line("p", detail));
@@ -149,7 +151,7 @@
       "Backup the database",
       'Make changes to automation (if required - see "New Setup")',
       "Run attached SQL (run 35005 first then 31628 second)"
-    ] : manual ? [] : [
+    ] : manual ? (manualNewSetup ? ["Apply the schedule recorded under New setup."] : []) : [
       "Backup the database",
       'Make the agreed automation changes (see "New Setup")',
       "Verify upcoming batch coverage and confirm the reviewed patients remain eligible under the new schedule"
