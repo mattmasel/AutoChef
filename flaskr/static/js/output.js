@@ -25,13 +25,15 @@
       document.getElementById(id).dispatchEvent(new Event("change", { bubbles: true }));
     }
     const job = document.getElementById("job-type").value;
-    const modify = job === "modify";
-    const manual = job === "manual";
+    const experimental = job === "experimental";
+    const modify = experimental && document.getElementById("manual-new-setup").checked;
+    const manual = job === "basic";
     const coverage = modify ? window.AutoChefCoverage.evaluate() : null;
-    const currentCoverage = job === "basic" ? window.AutoChefCurrentCoverage.evaluate() : null;
+    const currentCoverage = experimental ? window.AutoChefCurrentCoverage.evaluate() : null;
     // Only validate script ranges when they are included in this output.
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const relevant = [...form.querySelectorAll("input, select")].filter((field) => {
+      if (field.name.startsWith("preview_requested[")) return !field.matches(":disabled");
       if (manual && /^(requested_recalls\[|requested_recall_count$)/.test(field.name)) return !field.matches(":disabled");
       if (/^(existing_ranges|requested_ranges)\[/.test(field.name)) return !field.matches(":disabled") && Boolean(coverage?.includeRanges);
       return !field.matches(":disabled") && /^(recall_count|period_count|recalls\[|existing_ranges\[|batches\[|periods\[|Px\d|PostPx\d)/.test(field.name);
@@ -108,9 +110,10 @@
       if (!count) line("p", "None recorded");
     }
     writeSetup("recalls", total);
-    if (manual && data.has("manual_new_setup")) {
+    if (data.has("manual_new_setup")) {
       line("h3", "New setup");
       writeSetup("requested_recalls", Number(data.get("requested_recall_count")));
+      window.AutoChefAutoPreview.writeRequestedBatches(data,line);
     }
     if (modify) {
       line("h3", "Schedule change coverage assessment");

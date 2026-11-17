@@ -16,7 +16,7 @@ class Element {
 const get=id=>{if(!nodes.has(id)){const n=new Element();n.id=id;}return nodes.get(id);};
 const form=get('checklist-form');
 function field(id,value='',name=''){const n=get(id);n.value=value;n.name=name;form.append(n);return n;}
-field('job-type','basic','job_type');field('recall-count','1','recall_count');field('requested-count','1','requested_recall_count');field('period-count','0','period_count');
+field('manual-new-setup');field('job-type','experimental','job_type');field('recall-count','1','recall_count');field('requested-count','1','requested_recall_count');field('period-count','0','period_count');
 for(const [prefix,collection] of [['recall','recalls'],['requested','requested_recalls']]){
  field(prefix+'-0-name','Reminder',collection+'[0][name]');
  for(const [key,value] of [['schedule','Weekly'],['weekly_interval','1'],['weekdays','Monday'],['mode','Simple'],['period','Next Week']])field(prefix+'-'+key,value,collection+'[0]['+key+']');
@@ -31,6 +31,7 @@ const context=vm.createContext({window:{AutoChefSchedule:{update(){},format(){re
 for(const file of ['coverage-engine.js','current-coverage-engine.js','preview-engine.js','auto-preview.js','coverage.js','current-coverage.js','suggestion-engine.js','suggestions.js','output.js','agent-output.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../flaskr/static/js',file),'utf8'),context);
 const click=id=>get(id).dispatchEvent(new Event('click'));
 const edit=(id,value)=>{get(id).value=value;get(id).dispatchEvent(new Event('input',{bubbles:true}));};
+function setNewSetup(on){const box=get('manual-new-setup');box.checked=on;box.name=on?'manual_new_setup':'';box.dispatchEvent(new Event('change',{bubbles:true}));}
 const current=context.window.AutoChefCurrentCoverage;
 assert.equal(current.evaluate().state,'clear');
 edit('recall-weekly_interval','2');assert.equal(current.evaluate().scripts,true);
@@ -38,7 +39,7 @@ click('current-coverage-check');assert.match(get('current-coverage-result').text
 click('generate-notes');assert.match(get('notes-preview').textContent,/Scripts required: a potential current-setup gap/);
 edit('recall-weekly_interval','1');assert.equal(get('copy-notes').disabled,true);click('generate-notes');assert.match(get('notes-preview').textContent,/no gaps detected within the checked preview/);
 edit('batch-0-to','2026-11-30');assert.equal(current.evaluate().state,'incomplete');edit('batch-0-to','2026-11-29');
-edit('job-type','modify');assert.equal(get('current-coverage-section').hidden,true);assert.equal(get('coverage-section').hidden,false);
+setNewSetup(true);assert.equal(get('current-coverage-section').hidden,false);assert.equal(get('coverage-section').hidden,false);
 for(const [key,value] of [['next','2026-11-16'],['time','09:00'],['from','2026-11-23'],['to','2026-11-29']])edit('auto-requested-0-'+key,value);
 get('coverage-confirm').checked=true;
 const comparison=context.window.AutoChefCoverage;
@@ -50,9 +51,18 @@ edit('requested-weekly_interval','2');assert.equal(get('coverage-decision').valu
 // A manual no-script choice and absent notes can never override a detected gap.
 edit('coverage-evidence','');edit('coverage-decision','clear');assert.equal(comparison.evaluate().scripts,true);
 click('generate-notes');assert.match(get('notes-preview').textContent,/Scripts required automatically/);
+// Identical fortnightly schedules can share a weekly hole even when the change adds none.
+edit('recall-weekly_interval','2');
+const sharedGap=comparison.evaluate();
+assert.equal(sharedGap.newSetup.state,'gap');
+assert.equal(sharedGap.scripts,true);
+assert.match(sharedGap.details.join(' '),/New setup — potential gap/);
+assert.match(sharedGap.newSetup.messages.join(' '),/30\/11\/2026 to 06\/12\/2026/);
+edit('recall-weekly_interval','1');
+
 edit('auto-requested-0-to','2026-11-30');assert.equal(comparison.evaluate().state,'incomplete');assert.equal(comparison.evaluate().scripts,null);
 edit('coverage-evidence','Manual handling needed');edit('coverage-decision','manual');assert.equal(comparison.evaluate().scripts,true);
-edit('job-type','basic');assert.equal(get('auto-requested-0-to').value,'2026-11-30');assert.equal(current.evaluate().state,'clear');
+setNewSetup(false);assert.equal(get('auto-requested-0-to').value,'2026-11-30');assert.equal(current.evaluate().state,'clear');
 console.log('UI integration passed: automatic inputs, Basic and Modify results, output integration, mandatory gap policy, invalidation and job switching.');
 
 // Suggestion UI works on current in Basic and proposed in Modify; never grants approval.
@@ -68,7 +78,7 @@ assert.match(get('current-suggestions').textContent,/more than 4 week/);
 assert.match(get('current-suggestions').textContent,/not confirmed by D4W/);
 edit('recall-weekly_interval','1');assert.equal(get('current-suggestions').textContent,'');
 click('current-suggest');assert.match(get('current-suggestions').textContent,/No ongoing gaps/);
-edit('job-type','modify');edit('auto-requested-0-from','2026-12-21');edit('auto-requested-0-to','2026-12-27');
+setNewSetup(true);edit('auto-requested-0-from','2026-12-21');edit('auto-requested-0-to','2026-12-27');
 const decision=get('coverage-decision').value;
 click('modify-suggest');assert.match(get('modify-suggestions').textContent,/Option 1/);
 assert.equal(get('coverage-decision').value,decision);assert.equal(get('requested-weekly_interval').value,'2');
@@ -84,13 +94,13 @@ for(const key of ['amount','unit','comparison','direction'])rename('requested-fi
 for(const [key,value] of [['amount','1'],['unit','week(s)'],['comparison','is'],['direction','future']])field('requested-0-second-'+key,value,'requested_recalls[0][second]['+key+']');
 field('requested-0-and','on','requested_recalls[0][and]').type='checkbox';
 form.querySelectorAll=selector=>selector==='input, select'?[...nodes.values()].filter(n=>n.name):[];
-edit('job-type','basic');edit('recall-weekly_interval','2');
+setNewSetup(false);edit('recall-weekly_interval','2');
 let seed=context.window.AutoChefAutoPreview.build(false).groups[0].types;
 let candidate=context.window.AutoChefSuggestions.suggest(seed).options[0];
 let signature=context.window.AutoChefAutoPreview.signature();
 const sourceBefore=JSON.stringify([...new FormData(form)].filter(([name])=>name.startsWith('recalls[')||name.startsWith('batches[')));
 assert.equal(context.window.AutoChefSuggestionUI.applyOption(candidate,false,signature),true);
-assert.equal(get('job-type').value,'modify');
+assert.equal(get('job-type').value,'experimental');assert.equal(get('manual-new-setup').checked,true);
 assert.equal(get('requested-weekly_interval').value,'2');
 assert.equal(get('requested-0-mode').value,'Advanced');assert.equal(get('requested-0-and').checked,true);
 assert.equal(get('requested-0-first-amount').value,'4');assert.equal(get('requested-0-second-amount').value,'6');
@@ -109,7 +119,8 @@ assert.equal(get('requested-weekly_interval').value,'2');assert.equal(get('auto-
 console.log('Suggestion handoff passed: proposed conditions, unchanged source/schedules, required D4W seeds, reset decisions and stale-option rejection.');
 
 // Manual jobs generate both outputs independently of either coverage engine.
-edit('job-type','manual');
+edit('job-type','basic');
+setNewSetup(false);
 for (const section of ['current-coverage-section','coverage-section']) assert.equal(get(section).hidden,true);
 context.window.AutoChefCurrentCoverage.evaluate = context.window.AutoChefCoverage.evaluate = () => {
  throw new Error('Manual output called a coverage evaluator');
@@ -130,16 +141,20 @@ assert.match(get('agent-preview').textContent,/30\/12\/2099/);
 assert.match(get('agent-preview').textContent,/Move all patients/);
 console.log('Manual outputs passed with and without SQL.');
 
-field('manual-new-setup','on','manual_new_setup');
+setNewSetup(true);
+edit('auto-requested-0-next','2026-12-09');
+edit('auto-requested-0-from','2026-11-04');
+edit('auto-requested-0-to','2026-11-10');
+edit('auto-requested-0-patients','0');
 edit('requested-0-name','Modified reminder');
 for (const sql of [false,true]) {
  get('manual-sql').checked=sql;
  for (const [button,preview] of [['generate-notes','notes-preview'],['generate-agent','agent-preview']]) {
   click(button);
-  assert.match(get(preview).textContent,/New setup[\s\S]*Modified reminder/);
+  assert.match(get(preview).textContent,/Upcoming recall batches — New setup[\s\S]*Modified reminder — Batch date 09\/12\/2026.*Recall from 04\/11\/2026.*Recall to 10\/11\/2026.*Patients: 0/);
  }
 }
-get('manual-new-setup').name='';
+setNewSetup(false);
 click('generate-notes');
 click('generate-agent');
 for (const id of ['notes-preview','agent-preview']) assert.doesNotMatch(get(id).textContent,/Modified reminder/);

@@ -15,8 +15,8 @@
   const requestedEntries = [];
   const jobType = document.getElementById("job-type");
   const newSetup = document.getElementById("manual-new-setup");
-  const draftsByJob = { basic: [], manual: [], manualNew: [], modify: [] };
-  const usesCurrentRanges = () => jobType.value !== "modify" && !(jobType.value === "manual" && newSetup.checked);
+  const draftsByJob = { basic: [], basicNew: [], experimental: [], experimentalNew: [] };
+  const usesCurrentRanges = () => !newSetup.checked;
   const ranges = [];
   const existingRanges = [];
   const existingDrafts = [];
@@ -26,20 +26,20 @@
 
   function updateJobType() {
     const currentRanges = usesCurrentRanges();
-    const manual = jobType.value === "manual";
+    const manual = jobType.value === "basic";
     const review = document.getElementById("manual-review");
     review.hidden = review.disabled = !manual;
     document.getElementById("manual-agent-help").hidden = !manual;
     document.getElementById("automatic-agent-help").hidden = manual;
     document.getElementById("manual-batch-help").hidden = !manual;
     document.getElementById("automatic-batch-help").hidden = manual;
-    document.getElementById("existing-range-section").hidden = jobType.value !== "modify";
-    document.getElementById("existing-range-fields").disabled = jobType.value !== "modify";
+    document.getElementById("existing-range-section").hidden = manual || currentRanges;
+    document.getElementById("existing-range-fields").disabled = manual || currentRanges;
     document.getElementById("requested-section").hidden = currentRanges;
     document.getElementById("requested-fields").disabled = currentRanges;
-    newSetup.setAttribute("aria-expanded", String(manual && newSetup.checked));
-    document.getElementById("requested-heading").textContent = manual ? "8. New setup" : "8. Requested Recall Set Types and Schedule";
-    rangeDrafts = draftsByJob[manual && newSetup.checked ? "manualNew" : jobType.value];
+    newSetup.setAttribute("aria-expanded", String(newSetup.checked));
+    document.getElementById("requested-heading").textContent = "8. New setup";
+    rangeDrafts = draftsByJob[newSetup.checked ? jobType.value + "New" : jobType.value];
     const section = currentRanges ? "3" : "8";
     document.getElementById("range-heading").textContent = currentRanges ? "9. Recall date ranges" : "9. Requested recall date ranges";
     document.getElementById("range-help").textContent = `Types follow the order in section ${section}, newest dates first. Enter each From date except the last. Each following To date is calculated as the previous From date minus one day.`;
@@ -219,7 +219,7 @@
       batches.push(addRow("batch-template", "recall-batches", batches.length));
     }
     setVisibleRows(batches, total);
-    const manual = jobType.value === "manual";
+    const manual = jobType.value === "basic";
     for (const batch of batches) {
       for (const panel of batch.querySelectorAll("[data-preview-only]")) {
         panel.hidden = manual;

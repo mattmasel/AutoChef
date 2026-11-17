@@ -4,7 +4,8 @@
   'use strict';
   const {day,time,date}=window.AutoChefCoverageEngine;
   function assess(input) {
-    const incomplete=message=>({state:'incomplete',title:'Current setup — assessment incomplete',scripts:null,gaps:[],pending:[],messages:[message]});
+    const setup=input.setupName || 'Current setup';
+    const incomplete=message=>({state:'incomplete',title:`${setup} — assessment incomplete`,scripts:null,gaps:[],pending:[],messages:[message]});
     const start=time(input.start),end=time(input.end),count=input.types.length;
     if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return incomplete('Enter an assessment start and a later end time.');
     if(!input.confirmed)return incomplete('Confirm all current-setup runs in this window and the reminder order.');
@@ -82,8 +83,8 @@
     messages.push('This is a bounded preview check, not proof of historical or perpetual coverage. Dates outside the supplied ranges, existing stranded patients outside those ranges, eligibility, treatment resets and actual patient counts are not established. A later catch-up run outside the preview may resolve a flagged gap.');
     const state=gaps.length?'gap':insufficient.length||repeated.length?'incomplete':'clear';
     const scripts=gaps.length?true:state==='clear'?false:null;
-    messages.push(scripts===true?'Scripts required: a potential current-setup gap was detected, regardless of patient counts. Review corrective ranges and the schedule before running scripts; an ongoing schedule gap also needs correction. Do not re-enrol completed final reminders.':scripts===false?'No gap-driven scripts identified within the checked preview. This does not cancel scripts needed for other work.':'Script requirement unresolved — complete the preview or review the outstanding cases.');
-    return {state,scripts,gaps,pending,messages,title:state==='gap'?'Current setup — potential gap: scripts required':state==='clear'?'Current setup — no gaps detected within the checked preview':'Current setup — further review needed'};
+    messages.push(scripts===true?`Scripts required: a potential ${setup.toLowerCase().replace(' ', '-')} gap was detected, regardless of patient counts. Review corrective ranges and the schedule before running scripts; an ongoing schedule gap also needs correction. Do not re-enrol completed final reminders.`:scripts===false?'No gap-driven scripts identified within the checked preview. This does not cancel scripts needed for other work.':'Script requirement unresolved — complete the preview or review the outstanding cases.');
+    return {state,scripts,gaps,pending,messages,title:state==='gap'?`${setup} — potential gap: scripts required`:state==='clear'?`${setup} — no gaps detected within the checked preview`:`${setup} — further review needed`};
   }
   window.AutoChefCurrentCoverageEngine={assess};
 })();

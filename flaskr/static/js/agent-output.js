@@ -28,14 +28,16 @@
       document.getElementById(id).dispatchEvent(new Event("change", { bubbles: true }));
     }
     const job = document.getElementById("job-type").value;
-    const modify = job === "modify";
-    const manual = job === "manual";
+    const experimental = job === "experimental";
+    const modify = experimental && document.getElementById("manual-new-setup").checked;
+    const manual = job === "basic";
     form.querySelectorAll("[data-recall]").forEach(entry => window.AutoChefSchedule.update(entry));
     const coverage = modify ? window.AutoChefCoverage.evaluate() : null;
-    const currentCoverage = job === "basic" ? window.AutoChefCurrentCoverage.evaluate() : null;
-    const scripts = job === "basic" || coverage?.scripts === true || (manual && document.getElementById("manual-sql").checked);
+    const currentCoverage = experimental ? window.AutoChefCurrentCoverage.evaluate() : null;
+    const scripts = (experimental && !modify) || coverage?.scripts === true || (manual && document.getElementById("manual-sql").checked);
     const fields = [...form.querySelectorAll("input, select")].filter(field => {
       if (field.matches(":disabled")) return false;
+      if (field.name.startsWith("preview_requested[")) return true;
       if (/^(requested_ranges\[|batches\[.*\[date\])/.test(field.name)) return scripts;
       return /^(recall_count|requested_recall_count|recalls\[|requested_recalls\[)/.test(field.name);
     });
@@ -62,7 +64,7 @@
     const targetTotal = (modify || manualNewSetup) ? Number(data.get("requested_recall_count")) : total;
     if ((!manual || scripts) && (!total || !targetTotal)) { fail("Add at least one current recall type and one active date-range type."); return; }
     for (const field of fields) {
-      if ((/\[(name|from|to|date)\]$/.test(field.name)) && !field.value.trim()) {
+      if (!field.name.startsWith("preview_requested[") && (/\[(name|from|to|date)\]$/.test(field.name)) && !field.value.trim()) {
         fail("Complete recall type names, all upcoming batch dates and active date ranges before generating instructions.", field); return;
       }
     }
@@ -113,7 +115,9 @@
     line("h3", "Current Setup");
     setup("recalls", total);
     if (manualNewSetup && !targetTotal) { fail("Enter at least one recall type for New setup.", document.getElementById("requested-count")); return; }
-    if (modify || manualNewSetup) { line("h3", manualNewSetup ? "New setup" : "New Setup"); setup("requested_recalls", targetTotal); }
+    if (modify || manualNewSetup) { line("h3", manualNewSetup ? "New setup" : "New Setup"); setup("requested_recalls", targetTotal);
+      window.AutoChefAutoPreview.writeRequestedBatches(data,line);
+    }
     if (modify) {
       line("h3", "Schedule change coverage assessment");
       coverage.details.forEach(detail => line("p", detail));
