@@ -35,7 +35,7 @@
     const relevant = [...form.querySelectorAll("input, select")].filter((field) => {
       if (field.name.startsWith("preview_requested[")) return !field.matches(":disabled");
       if (manual && /^(requested_recalls\[|requested_recall_count$)/.test(field.name)) return !field.matches(":disabled");
-      if (/^(existing_ranges|requested_ranges)\[/.test(field.name)) return !field.matches(":disabled") && Boolean(coverage?.includeRanges);
+      if (/^(existing_ranges|requested_ranges)\[/.test(field.name)) return !field.matches(":disabled") && Boolean(coverage?.includeRanges || (manual && document.getElementById("manual-sql").checked));
       return !field.matches(":disabled") && /^(recall_count|period_count|recalls\[|existing_ranges\[|batches\[|periods\[|Px\d|PostPx\d)/.test(field.name);
     });
     for (const field of relevant) {
@@ -63,6 +63,27 @@
       fragment.append(element);
       text.push(content, "");
     }
+    if (manual) {
+      line("h1", "Recall Checklist");
+      line("h3", "Current Recall Set Types and Schedule");
+      writeSetup("recalls", total);
+      line("h3", "Upcoming Batches — Current Setup");
+      for (let i = 0; i < total; i++) {
+        line("p", `${value(`recalls[${i}][name]`)} — ${value(`batches[${i}][date]`)} — ${value(`batches[${i}][patients]`)} Patients`);
+      }
+      if (data.has("manual_new_setup")) {
+        line("h3", "Proposed Recall Set Types and Schedule");
+        writeSetup("requested_recalls", Number(data.get("requested_recall_count")));
+        window.AutoChefAutoPreview.writeRequestedBatches(data, line);
+      }
+      if (data.has("manual_sql")) {
+        line("h3", "SQL Recall Date Ranges");
+        const count = data.has("manual_new_setup") ? Number(data.get("requested_recall_count")) : total;
+        for (let i = 0; i < count; i++) {
+          line("p", `${value(`requested_ranges[${i}][name]`)} — ${value(`requested_ranges[${i}][from]`)} to ${value(`requested_ranges[${i}][to]`)}`);
+        }
+      }
+    } else {
     line("h1", "Automation Testing Phase");
     if (!manual) {
       line("h2", "Steps Performed");
@@ -92,23 +113,6 @@
     }
     if (!total) line("p", "None recorded");
     line("h3", "Current Automation Recall Setup");
-    function condition(prefix, row) {
-      return `${value(`${prefix}[${row}][comparison]`)} ${value(`${prefix}[${row}][amount]`)} ${value(`${prefix}[${row}][unit]`)} in the ${value(`${prefix}[${row}][direction]`)}`;
-    }
-    function writeSetup(collection, count) {
-      for (let i = 0; i < count; i++) {
-        const prefix = `${collection}[${i}]`;
-        const schedule = window.AutoChefSchedule.format(data, prefix);
-        let period = value(`${prefix}[period]`);
-        if (data.get(`${prefix}[mode]`) === "Advanced") {
-          period = condition(prefix, "first");
-          period = period.charAt(0).toUpperCase() + period.slice(1);
-          if (data.has(`${prefix}[and]`)) period += ` AND ${condition(prefix, "second")}`;
-        }
-        line("p", `${value(`${prefix}[name]`)} - ${schedule} - ${period}`);
-      }
-      if (!count) line("p", "None recorded");
-    }
     writeSetup("recalls", total);
     if (data.has("manual_new_setup")) {
       line("h3", "New setup");
@@ -153,6 +157,24 @@
     for (let i = 1; i <= 3; i++) {
       // Read shared identity directly from pre-SQL fields so it cannot diverge.
       line("p", `[${value(`Px${i}ID`)}] ${value(`Px${i}RecallSet`)} - ${["RecallPeriod", "RecallDate", "RecallType"].map(key => value(`PostPx${i}${key}`)).join(" - ")}`);
+    }
+    }
+    function condition(prefix, row) {
+      return `${value(`${prefix}[${row}][comparison]`)} ${value(`${prefix}[${row}][amount]`)} ${value(`${prefix}[${row}][unit]`)} in the ${value(`${prefix}[${row}][direction]`)}`;
+    }
+    function writeSetup(collection, count) {
+      for (let i = 0; i < count; i++) {
+        const prefix = `${collection}[${i}]`;
+        const schedule = window.AutoChefSchedule.format(data, prefix);
+        let period = value(`${prefix}[period]`);
+        if (data.get(`${prefix}[mode]`) === "Advanced") {
+          period = condition(prefix, "first");
+          period = period.charAt(0).toUpperCase() + period.slice(1);
+          if (data.has(`${prefix}[and]`)) period += ` AND ${condition(prefix, "second")}`;
+        }
+        line("p", `${value(`${prefix}[name]`)} - ${schedule} - ${period}`);
+      }
+      if (!count) line("p", "None recorded");
     }
     preview.replaceChildren(fragment);
     preview.hidden = false;

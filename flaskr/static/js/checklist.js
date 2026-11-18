@@ -28,7 +28,17 @@
     const currentRanges = usesCurrentRanges();
     const manual = jobType.value === "basic";
     const review = document.getElementById("manual-review");
-    review.hidden = review.disabled = !manual;
+    review.hidden = review.disabled = true;
+    form.querySelectorAll("[data-experimental-only]").forEach(section => { section.hidden = section.disabled = manual; });
+    document.getElementById("basic-sql-option").hidden = !manual;
+    document.getElementById("manual-sql").disabled = !manual;
+    const hideRanges = manual && !document.getElementById("manual-sql").checked;
+    document.getElementById("sql-range-section").hidden = hideRanges;
+    document.getElementById("sql-range-fields").disabled = hideRanges;
+    document.getElementById("current-heading").textContent = (manual ? "1" : "3") + ". Current Recall Set Types and Schedule";
+    document.getElementById("current-batch-heading").textContent = (manual ? "2" : "4") + ". Upcoming Batches — Current Setup";
+    document.getElementById("proposed-batch-section").hidden = currentRanges;
+    document.getElementById("proposed-batch-fields").disabled = currentRanges;
     document.getElementById("manual-agent-help").hidden = !manual;
     document.getElementById("automatic-agent-help").hidden = manual;
     document.getElementById("manual-batch-help").hidden = !manual;
@@ -38,10 +48,11 @@
     document.getElementById("requested-section").hidden = currentRanges;
     document.getElementById("requested-fields").disabled = currentRanges;
     newSetup.setAttribute("aria-expanded", String(newSetup.checked));
-    document.getElementById("requested-heading").textContent = "8. New setup";
+    document.getElementById("requested-heading").textContent = manual ? "3. Proposed Recall Set Types and Schedule" : "8. Proposed Recall Set Types and Schedule";
     rangeDrafts = draftsByJob[newSetup.checked ? jobType.value + "New" : jobType.value];
-    const section = currentRanges ? "3" : "8";
-    document.getElementById("range-heading").textContent = currentRanges ? "9. Recall date ranges" : "9. Requested recall date ranges";
+    document.getElementById("proposed-batch-heading").textContent = (manual ? "4" : "8b") + ". Upcoming Batches — Proposed Setup";
+    const section = manual ? (currentRanges ? "1" : "3") : (currentRanges ? "3" : "8");
+    document.getElementById("range-heading").textContent = manual ? "5. SQL Recall Date Ranges" : "9. Recall date ranges";
     document.getElementById("range-help").textContent = `Types follow the order in section ${section}, newest dates first. Enter each From date except the last. Each following To date is calculated as the previous From date minus one day.`;
     document.getElementById("range-empty").textContent = `Add ${currentRanges ? "current" : "requested"} recall types in section ${section} to enter their date ranges.`;
     updateCount();
@@ -66,7 +77,7 @@
   }
 
   function syncRanges() {
-    syncRangeGroup("range", activeRangeCount, rangeDrafts, usesCurrentRanges() ? "recall" : "requested", usesCurrentRanges() ? "3" : "8");
+    syncRangeGroup("range", activeRangeCount, rangeDrafts, usesCurrentRanges() ? "recall" : "requested", jobType.value === "basic" ? (usesCurrentRanges() ? "1" : "3") : (usesCurrentRanges() ? "3" : "8"));
     syncRangeGroup("existing-range", existingCount, existingDrafts, "recall", "3");
   }
 
@@ -239,6 +250,7 @@
 
   // Use change rather than every keystroke so multi-digit counts can be entered.
   count.addEventListener("change", updateCount);
+  document.getElementById("manual-sql").addEventListener("change", updateJobType);
   newSetup.addEventListener("change", updateJobType);
   jobType.addEventListener("change", updateJobType);
   periodCount.addEventListener("change", updatePeriods);

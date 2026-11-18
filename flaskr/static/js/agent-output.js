@@ -114,15 +114,19 @@
     if (!manual) line("p", scripts ? "Below checklist approved and SQL supplied." : "Below checklist approved for schedule changes without SQL within the reviewed scope.");
     line("h3", "Current Setup");
     setup("recalls", total);
+    if (manual) {
+      line("h3", "Upcoming Batches — Current Setup");
+      for (let i = 0; i < total; i++) line("p", `${value(`recalls[${i}][name]`)} — ${value(`batches[${i}][date]`) || "Not recorded"} — ${value(`batches[${i}][patients]`) || "Not recorded"} Patients`);
+    }
     if (manualNewSetup && !targetTotal) { fail("Enter at least one recall type for New setup.", document.getElementById("requested-count")); return; }
-    if (modify || manualNewSetup) { line("h3", manualNewSetup ? "New setup" : "New Setup"); setup("requested_recalls", targetTotal);
+    if (modify || manualNewSetup) { line("h3", manualNewSetup ? "Proposed Recall Set Types and Schedule" : "New Setup"); setup("requested_recalls", targetTotal);
       window.AutoChefAutoPreview.writeRequestedBatches(data,line);
     }
     if (modify) {
       line("h3", "Schedule change coverage assessment");
       coverage.details.forEach(detail => line("p", detail));
     }
-    if (manual && data.get("manual_findings")?.trim()) {
+    if (!manual && data.get("manual_findings")?.trim()) {
       line("h3", "Manual review findings");
       data.get("manual_findings").trim().split(/\r?\n/).filter(Boolean).forEach(note => line("p", note));
     }
@@ -149,18 +153,18 @@
     } else if (!manual) {
       line("p", "Confirm the reviewed schedule changes and book a time with the customer. No SQL or recall reassignment is included in this booking.");
     }
-    line("h3", "During Booking");
+    if (scripts || !manual || manualNewSetup) line("h3", "During Booking");
     // Keep job-specific booking steps in one place for future job requirements.
     const bookingSteps = scripts ? [
       "Backup the database",
       'Make changes to automation (if required - see "New Setup")',
       "Run attached SQL (run 35005 first then 31628 second)"
-    ] : manual ? (manualNewSetup ? ["Apply the schedule recorded under New setup."] : []) : [
+    ] : manual ? (manualNewSetup ? ["Apply the schedule recorded under Proposed Recall Set Types and Schedule."] : []) : [
       "Backup the database",
       'Make the agreed automation changes (see "New Setup")',
       "Verify upcoming batch coverage and confirm the reviewed patients remain eligible under the new schedule"
     ];
-    if (manual) {
+    if (!manual) {
       bookingSteps.push(...value("manual_actions").split(/\r?\n/).map(step => step.trim()).filter(Boolean));
       if (!bookingSteps.length) line("p", "No booking steps recorded.");
     }

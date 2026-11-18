@@ -20,20 +20,21 @@
    }
    requested.push({box,legend,...fields});$('auto-requested-batches').append(box);
   }
-  requested.forEach((r,i)=>{r.box.hidden=r.box.disabled=i>=n;r.time.disabled=r.time.parentElement.hidden=!experimental;r.legend.textContent=`${i+1}. ${$(`requested-${i}-name`)?.value||'Requested type'}`;});
+  requested.forEach((r,i)=>{r.box.hidden=r.box.disabled=i>=n;for(const key of ["time","from","to"])r[key].disabled=r[key].parentElement.hidden=!experimental;r.legend.textContent=`${i+1}. ${$(`requested-${i}-name`)?.value||'Requested type'}`;});
  }
  function writeRequestedBatches(data,line){
-  line('h3','Upcoming recall batches — New setup');
+  line('h3',data.get('job_type')==='basic'?'Upcoming Batches — Proposed Setup':'Upcoming recall batches — New setup');
   const count=Number(data.get('requested_recall_count'));
   let recorded=false;
   for(let i=0;i<count;i++){
    const read=key=>data.get(`preview_requested[${i}][${key}]`) || '';
+   const experimental=data.get('job_type')==='experimental';
    const date=key=>read(key).split('-').reverse().join('/');
-   if(!['next','from','to','patients'].some(read))continue;
+   if(!(experimental ? ['next','from','to','patients'] : ['next','patients']).some(read))continue;
    const parts=[data.get(`requested_recalls[${i}][name]`) || `Type ${i+1}`];
-   if(read('next'))parts.push(`Batch date ${date('next')}${read('time')?' '+read('time'):''}`);
-   if(read('from'))parts.push(`Recall from ${date('from')}`);
-   if(read('to'))parts.push(`Recall to ${date('to')}`);
+   if(read('next'))parts.push(`Batch date ${date('next')}${experimental && read('time')?' '+read('time'):''}`);
+   if(experimental && read('from'))parts.push(`Recall from ${date('from')}`);
+   if(experimental && read('to'))parts.push(`Recall to ${date('to')}`);
    if(read('patients'))parts.push(`Patients: ${read('patients')}`);
    line('p',parts.join(' — '));
    recorded=true;

@@ -129,10 +129,10 @@ field('manual-findings','Checked the fortnightly batches in D4W','manual_finding
 field('manual-actions','Confirm next batch with practice','manual_actions');
 edit('batch-0-date','');
 click('generate-notes');
-assert.match(get('notes-preview').textContent,/Checked the fortnightly batches/);
+assert.doesNotMatch(get('notes-preview').textContent,/Checked the fortnightly batches|Test Patients|Recall Period/);
 assert.doesNotMatch(get('notes-preview').textContent,/coverage assessment|Steps Performed/);
 click('generate-agent');
-assert.match(get('agent-preview').textContent,/Confirm next batch with practice/);
+assert.match(get('agent-preview').textContent,/Upcoming Batches — Current Setup/);
 assert.doesNotMatch(get('agent-preview').textContent,/SQL supplied|Script Expiry Warning|approved/);
 get('manual-sql').checked=true;
 edit('batch-0-date','31/12/2099');
@@ -151,7 +151,7 @@ for (const sql of [false,true]) {
  get('manual-sql').checked=sql;
  for (const [button,preview] of [['generate-notes','notes-preview'],['generate-agent','agent-preview']]) {
   click(button);
-  assert.match(get(preview).textContent,/Upcoming recall batches — New setup[\s\S]*Modified reminder — Batch date 09\/12\/2026.*Recall from 04\/11\/2026.*Recall to 10\/11\/2026.*Patients: 0/);
+  assert.match(get(preview).textContent,/Upcoming Batches — Proposed Setup[\s\S]*Modified reminder — Batch date 09\/12\/2026.*Patients: 0/);
  }
 }
 setNewSetup(false);
